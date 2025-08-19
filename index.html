@@ -42,6 +42,21 @@
         .toggle-checkbox:checked + .toggle-label { background-color: #4F46E5; }
         .toggle-checkbox:checked + .toggle-label .toggle-ball { transform: translateX(100%); }
 
+        /* --- Unified Settings Button Styles --- */
+        .settings-btn {
+            background-color: #374151; color: #D1D5DB; border: 1px solid #4B5563; transition: all 0.2s ease-in-out;
+        }
+        .settings-btn:hover {
+            background-color: #4B5563;
+        }
+        .settings-btn.active-btn {
+            background-color: #4F46E5; color: white; border-color: #4F46E5; font-weight: 700;
+        }
+        .collapsible-title:hover {
+            cursor: pointer;
+            color: #a5b4fc;
+        }
+        
         /* --- Title Banner Base Style --- */
         #title-banner {
             transition: background 0.5s ease-in-out;
@@ -49,15 +64,7 @@
         }
 
         /* --- Individual Banner Styles --- */
-        .banner-ramen { background-color: #b7791f; } /* Sad Brown/Gold */
-        .banner-liquidator { background: linear-gradient(to right, #742a2a, #c53030); } /* Dark Red */
-        .banner-bagholder { background: linear-gradient(to right, #ed8936, #f6ad55); } /* Orange */
-        .banner-novice { background-color: #4a5568; } /* Gray */
-        .banner-aspiring { background: linear-gradient(to right, #3182ce, #63b3ed); } /* Blue */
-        .banner-pro { background: linear-gradient(to right, #38a169, #68d391); } /* Green */
-        .banner-seasoned { background: linear-gradient(to right, #d69e2e, #f6e05e); } /* Yellow/Gold */
-        .banner-maven { background: linear-gradient(to right, #805ad5, #b794f4); } /* Purple */
-        .banner-wolf { background: linear-gradient(to right, #c53030, #f56565); } /* Red */
+        .banner-ramen { background-color: #b7791f; } .banner-liquidator { background: linear-gradient(to right, #742a2a, #c53030); } .banner-bagholder { background: linear-gradient(to right, #ed8936, #f6ad55); } .banner-novice { background-color: #4a5568; } .banner-aspiring { background: linear-gradient(to right, #3182ce, #63b3ed); } .banner-pro { background: linear-gradient(to right, #38a169, #68d391); } .banner-seasoned { background: linear-gradient(to right, #d69e2e, #f6e05e); } .banner-maven { background: linear-gradient(to right, #805ad5, #b794f4); } .banner-wolf { background: linear-gradient(to right, #c53030, #f56565); }
         .banner-overlord {
             background: linear-gradient(-45deg, #1a202c, #2d3748, #4a5568, #718096);
             background-size: 400% 400%;
@@ -69,20 +76,9 @@
             animation: gradientBG 15s ease infinite;
         }
         
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .flash-animation {
-            animation: flash 1.5s ease-out;
-        }
-        @keyframes flash {
-            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
-            70% { box-shadow: 0 0 25px 10px rgba(255, 255, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-        }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .flash-animation { animation: flash 1.5s ease-out; }
+        @keyframes flash { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); } 70% { box-shadow: 0 0 25px 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
     </style>
 </head>
 <body class="p-4 pt-16">
@@ -93,31 +89,48 @@
 
     <div class="flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-[min-content_1fr_min-content] gap-4 h-full">
         
+        <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-3">
+             <h2 id="account-title" class="collapsible-title text-xl font-bold mb-3 flex justify-between items-center transition-colors">
+                <span>Account</span>
+                <span id="account-toggle-icon">▲</span>
+            </h2>
+            <div id="account-details-expanded" class="space-y-2 text-sm">
+                <div class="flex justify-between"><span>Balance:</span> <span id="balance">$10,000.00</span></div>
+                <div class="flex justify-between"><span>Equity:</span> <span id="equity">$10,000.00</span></div>
+                <div class="flex justify-between"><span>Unrealized P/L:</span> <span id="unrealized-pl">$0.00</span></div>
+                <div class="flex justify-between"><span>Last P/L:</span> <span id="last-pl-expanded">$0.00</span></div>
+            </div>
+            <div id="account-details-collapsed" class="hidden text-sm font-semibold flex justify-around items-center">
+                <span>Balance: <span id="balance-collapsed"></span></span>
+                <span>P/L: <span id="unrealized-pl-collapsed"></span></span>
+                <span>Last: <span id="last-pl-collapsed"></span></span>
+            </div>
+        </div>
+        
         <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-1">
-            <h2 class="text-xl font-bold mb-4">Settings</h2>
-            <div class="space-y-3">
-                 <div>
-                    <label for="timeframe-select" class="block text-sm font-medium text-gray-300 mb-1">Timeframe</label>
-                    <select id="timeframe-select" class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="1">1 Minute</option>
-                        <option value="5" selected>5 Minutes</option>
-                        <option value="15">15 Minutes</option>
-                        <option value="60">1 Hour</option>
-                    </select>
-                </div>
-                 <div class="grid grid-cols-2 gap-3">
+            <h2 id="settings-title" class="collapsible-title text-xl font-bold mb-4 flex justify-between items-center transition-colors">
+                <span>Settings</span>
+                <span id="settings-toggle-icon">▲</span>
+            </h2>
+            <div id="timeframe-buttons" class="grid grid-cols-4 gap-2 mb-2">
+                <button data-value="1" class="settings-btn p-2 rounded-md text-sm">1m</button>
+                <button data-value="5" class="settings-btn p-2 rounded-md text-sm">5m</button>
+                <button data-value="15" class="settings-btn p-2 rounded-md text-sm">15m</button>
+                <button data-value="60" class="settings-btn p-2 rounded-md text-sm">1H</button>
+            </div>
+             <div id="speed-buttons" class="grid grid-cols-5 gap-1 mb-4">
+                <button data-value="1" class="settings-btn p-1 text-xs rounded">1x</button>
+                <button data-value="10" class="settings-btn p-1 text-xs rounded">10x</button>
+                <button data-value="50" class="settings-btn p-1 text-xs rounded">50x</button>
+                <button data-value="100" class="settings-btn p-1 text-xs rounded">100x</button>
+                <button data-value="200" class="settings-btn p-1 text-xs rounded">200x</button>
+            </div>
+            <div id="extra-settings" class="space-y-3">
+                <div class="grid grid-cols-1 gap-3">
                     <select id="candle-type" class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="candlestick" selected>Candlestick</option>
                         <option value="heikinashi">Heikin Ashi</option>
                     </select>
-                    <button id="reset-view-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Auto</button>
-                </div>
-                <div>
-                    <label for="speed-slider" class="block text-sm font-medium text-gray-300">Game Speed</label>
-                    <div class="flex items-center gap-2">
-                        <input type="range" id="speed-slider" min="1" max="200" value="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-                        <span id="speed-value" class="font-semibold text-indigo-400 w-12 text-center">1x</span>
-                    </div>
                 </div>
                 <div class="border-t border-gray-700 my-2"></div>
                 <div class="flex items-center justify-between">
@@ -141,46 +154,93 @@
                         <label for="bot-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"><span class="toggle-ball absolute block w-6 h-6 rounded-full bg-white shadow inset-y-0 left-0"></span></label>
                     </div>
                 </div>
-                <div class="border-t border-gray-700 my-2"></div>
-                <div class="flex items-center justify-between">
-                    <label for="tp-percent" class="text-sm font-medium text-gray-300">Take-Profit %</label>
-                    <input type="number" id="tp-percent" value="5" min="0" class="w-20 bg-gray-800 border border-gray-600 rounded-md p-1 text-center focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div class="flex items-center justify-between">
-                    <label for="sl-percent" class="text-sm font-medium text-gray-300">Stop-Loss %</label>
-                    <input type="number" id="sl-percent" value="2" min="0" class="w-20 bg-gray-800 border border-gray-600 rounded-md p-1 text-center focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
             </div>
         </div>
 
         <div id="chart-container" class="flex-grow rounded-lg shadow-lg card p-2 min-h-[300px] lg:col-span-2 lg:row-span-2 lg:col-start-1 lg:row-start-1">
             <canvas id="trading-chart"></canvas>
+            <button id="reset-view-btn" class="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-xs py-1 px-2 rounded-md transition-colors">Auto</button>
         </div>
 
         <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-2">
-            <h2 class="text-xl font-bold mb-4">Place Trade</h2>
-            <div class="space-y-4">
-                <div>
-                    <label for="trade-size" class="block text-sm font-medium text-gray-300">Trade Size (Margin)</label>
-                    <input type="number" id="trade-size" value="100" class="w-full mt-1 bg-gray-800 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <div id="size-percentage-buttons" class="grid grid-cols-4 gap-2 mt-2">
-                        <button class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors" data-percent="0.25">25%</button>
-                        <button class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors" data-percent="0.50">50%</button>
-                        <button class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors" data-percent="0.75">75%</button>
-                        <button class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors" data-percent="1.00">100%</button>
+            <h2 id="place-trade-title" class="collapsible-title text-xl font-bold mb-4 flex justify-between items-center transition-colors">
+                <span>Place Trade</span>
+                <span id="place-trade-toggle-icon">▲</span>
+            </h2>
+            
+            <div id="place-trade-expanded">
+                <div class="space-y-4">
+                    <div>
+                        <label for="trade-size" class="block text-sm font-medium text-gray-300">Trade Size</label>
+                        <input type="number" id="trade-size" value="100" class="w-full mt-1 bg-gray-800 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <div id="size-percentage-buttons" class="grid grid-cols-4 gap-2 mt-2">
+                            <button class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors" data-percent="0.25">25%</button>
+                            <button class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors" data-percent="0.50">50%</button>
+                            <button class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors" data-percent="0.75">75%</button>
+                            <button class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors" data-percent="1.00">100%</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="leverage" class="block text-sm font-medium text-gray-300">Leverage</label>
+                        <div class="flex items-center gap-2">
+                            <input type="range" id="leverage" min="1" max="100" value="10" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                            <span id="leverage-value" class="font-semibold text-indigo-400 w-12 text-center">10x</span>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-700 pt-4 space-y-3">
+                         <div>
+                            <label class="block text-sm font-medium text-gray-300">Take-Profit %</label>
+                            <div id="tp-buttons" class="grid grid-cols-6 gap-1 mt-1">
+                                <button data-value="2" class="settings-btn p-1 text-xs rounded">2%</button>
+                                <button data-value="5" class="settings-btn p-1 text-xs rounded">5%</button>
+                                <button data-value="10" class="settings-btn p-1 text-xs rounded">10%</button>
+                                <button data-value="25" class="settings-btn p-1 text-xs rounded">25%</button>
+                                <button data-value="50" class="settings-btn p-1 text-xs rounded">50%</button>
+                                <button data-value="0" class="settings-btn p-1 text-xs rounded">Off</button>
+                            </div>
+                        </div>
+                         <div>
+                            <label class="block text-sm font-medium text-gray-300">Stop-Loss %</label>
+                            <div id="sl-buttons" class="grid grid-cols-6 gap-1 mt-1">
+                                <button data-value="1" class="settings-btn p-1 text-xs rounded">1%</button>
+                                <button data-value="2" class="settings-btn p-1 text-xs rounded">2%</button>
+                                <button data-value="5" class="settings-btn p-1 text-xs rounded">5%</button>
+                                <button data-value="10" class="settings-btn p-1 text-xs rounded">10%</button>
+                                <button data-value="25" class="settings-btn p-1 text-xs rounded">25%</button>
+                                <button data-value="0" class="settings-btn p-1 text-xs rounded">Off</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label for="leverage" class="block text-sm font-medium text-gray-300">Leverage</label>
-                    <div class="flex items-center gap-2">
-                        <input type="range" id="leverage" min="1" max="100" value="10" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-                        <span id="leverage-value" class="font-semibold text-indigo-400 w-12 text-center">10x</span>
+            </div>
+
+            <div id="place-trade-collapsed" class="hidden space-y-3">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-medium text-gray-300">Trade Size</span>
+                    <div id="size-percentage-buttons-collapsed" class="grid grid-cols-4 gap-1">
+                         <button data-percent="0.25" class="bg-gray-700 hover:bg-gray-600 text-[11px] h-5 px-1.5 rounded transition-colors">25%</button>
+                         <button data-percent="0.50" class="bg-gray-700 hover:bg-gray-600 text-[11px] h-5 px-1.5 rounded transition-colors">50%</button>
+                         <button data-percent="0.75" class="bg-gray-700 hover:bg-gray-600 text-[11px] h-5 px-1.5 rounded transition-colors">75%</button>
+                         <button data-percent="1.00" class="bg-gray-700 hover:bg-gray-600 text-[11px] h-5 px-1.5 rounded transition-colors">100%</button>
                     </div>
+                    <span id="trade-size-collapsed" class="font-semibold text-indigo-400 w-16 text-right"></span>
                 </div>
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button id="long-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Long</button>
-                    <button id="short-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Short</button>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-medium text-gray-300">Leverage</span>
+                     <div id="leverage-buttons-collapsed" class="grid grid-cols-5 gap-1">
+                        <button data-value="1" class="settings-btn text-[11px] h-5 px-1.5 rounded">1x</button>
+                        <button data-value="10" class="settings-btn text-[11px] h-5 px-1.5 rounded">10x</button>
+                        <button data-value="25" class="settings-btn text-[11px] h-5 px-1.5 rounded">25x</button>
+                        <button data-value="50" class="settings-btn text-[11px] h-5 px-1.5 rounded">50x</button>
+                        <button data-value="100" class="settings-btn text-[11px] h-5 px-1.5 rounded">100x</button>
+                    </div>
+                    <span id="leverage-value-collapsed" class="font-semibold text-indigo-400 w-12 text-right"></span>
                 </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-700 mt-4">
+                <button id="long-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Long</button>
+                <button id="short-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Short</button>
             </div>
         </div>
 
@@ -191,14 +251,6 @@
             </div>
         </div>
         
-        <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-3">
-             <h2 class="text-xl font-bold mb-3">Account</h2>
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span>Balance:</span> <span id="balance">$10,000.00</span></div>
-                <div class="flex justify-between"><span>Equity:</span> <span id="equity">$10,000.00</span></div>
-                <div class="flex justify-between"><span>Unrealized P/L:</span> <span id="unrealized-pl">$0.00</span></div>
-            </div>
-        </div>
     </div>
 
     <div id="message-box" class="fixed top-20 right-5 bg-indigo-600 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 pointer-events-none z-50 transition-opacity duration-300 ease-in-out">
@@ -222,11 +274,31 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- DOM Element References ---
+            const accountTitleEl = document.getElementById('account-title');
+            const accountToggleIconEl = document.getElementById('account-toggle-icon');
+            const accountDetailsExpandedEl = document.getElementById('account-details-expanded');
+            const accountDetailsCollapsedEl = document.getElementById('account-details-collapsed');
+            const balanceCollapsedEl = document.getElementById('balance-collapsed');
+            const unrealizedPlCollapsedEl = document.getElementById('unrealized-pl-collapsed');
+            const lastPlExpandedEl = document.getElementById('last-pl-expanded');
+            const lastPlCollapsedEl = document.getElementById('last-pl-collapsed');
+            const settingsTitleEl = document.getElementById('settings-title');
+            const extraSettingsEl = document.getElementById('extra-settings');
+            const settingsToggleIconEl = document.getElementById('settings-toggle-icon');
+            const timeframeButtonsEl = document.getElementById('timeframe-buttons');
+            const speedButtonsEl = document.getElementById('speed-buttons');
+            const tpButtonsEl = document.getElementById('tp-buttons');
+            const slButtonsEl = document.getElementById('sl-buttons');
+            const placeTradeTitleEl = document.getElementById('place-trade-title');
+            const placeTradeToggleIconEl = document.getElementById('place-trade-toggle-icon');
+            const placeTradeExpandedEl = document.getElementById('place-trade-expanded');
+            const placeTradeCollapsedEl = document.getElementById('place-trade-collapsed');
+            const tradeSizeCollapsedEl = document.getElementById('trade-size-collapsed');
+            const leverageValueCollapsedEl = document.getElementById('leverage-value-collapsed');
+            const leverageButtonsCollapsedEl = document.getElementById('leverage-buttons-collapsed');
             const soundsToggle = document.getElementById('sounds-toggle');
             const signalsToggle = document.getElementById('signals-toggle');
             const botToggle = document.getElementById('bot-toggle');
-            const tpInput = document.getElementById('tp-percent');
-            const slInput = document.getElementById('sl-percent');
             const balanceEl = document.getElementById('balance');
             const equityEl = document.getElementById('equity');
             const unrealizedPlEl = document.getElementById('unrealized-pl');
@@ -237,11 +309,9 @@
             const shortButton = document.getElementById('short-button');
             const positionsListEl = document.getElementById('positions-list');
             const candleTypeSelect = document.getElementById('candle-type');
-            const speedSlider = document.getElementById('speed-slider');
-            const speedValueEl = document.getElementById('speed-value');
             const resetViewBtn = document.getElementById('reset-view-btn');
-            const timeframeSelect = document.getElementById('timeframe-select');
             const sizePercentageButtonsEl = document.getElementById('size-percentage-buttons');
+            const sizePercentageButtonsCollapsedEl = document.getElementById('size-percentage-buttons-collapsed');
             const titleBannerEl = document.getElementById('title-banner');
             const playerTitleEl = document.getElementById('player-title');
             const gameOverModalEl = document.getElementById('game-over-modal');
@@ -267,34 +337,17 @@
             let takeProfitPercent = 5;
             let stopLossPercent = 2;
             let soundsEnabled = true;
+            let settingsPanelExpanded = true;
+            let accountPanelExpanded = true;
+            let placeTradePanelExpanded = true;
+            let lastClosedPl = 0;
 
             // --- Sound Effects (using Howler.js) ---
-            const sounds = {
-                click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }),
-                open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }),
-                win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }),
-                lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] })
-            };
-            function playSound(soundName) {
-                if (soundsEnabled && sounds[soundName]) {
-                    sounds[soundName].play();
-                }
-            }
+            const sounds = { click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }), open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }), win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }), lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }) };
+            function playSound(soundName) { if (soundsEnabled && sounds[soundName]) { sounds[soundName].play(); } }
             
             // --- Title Tiers ---
-            const titles = [
-                { balance: 1000000, name: 'Legendary Leviathan 🐋', className: 'banner-legendary' },
-                { balance: 500000,  name: 'Galactic Overlord 🚀',   className: 'banner-overlord' },
-                { balance: 250000,  name: 'Wall Street Wolf 🐺',   className: 'banner-wolf' },
-                { balance: 100000,  name: 'Market Maven 🧠',      className: 'banner-maven' },
-                { balance: 50000,   name: 'Seasoned Speculator 🧐',className: 'banner-seasoned' },
-                { balance: 25000,   name: 'Pro Piker 📈',        className: 'banner-pro' },
-                { balance: 15000,   name: 'Aspiring Analyst 🤓',  className: 'banner-aspiring' },
-                { balance: 10000,   name: 'Novice Trader 🌱',     className: 'banner-novice' },
-                { balance: 7500,    name: 'Aspiring Bagholder 🛍️', className: 'banner-bagholder' },
-                { balance: 5000,    name: 'Expert Liquidator 📉',  className: 'banner-liquidator' },
-                { balance: 0,       name: 'Ramen Connoisseur 🍜',  className: 'banner-ramen' }
-            ];
+            const titles = [ { balance: 1000000, name: 'Legendary Leviathan 🐋', className: 'banner-legendary' }, { balance: 500000,  name: 'Galactic Overlord 🚀',   className: 'banner-overlord' }, { balance: 250000,  name: 'Wall Street Wolf 🐺',   className: 'banner-wolf' }, { balance: 100000,  name: 'Market Maven 🧠',      className: 'banner-maven' }, { balance: 50000,   name: 'Seasoned Speculator 🧐',className: 'banner-seasoned' }, { balance: 25000,   name: 'Pro Piker 📈',        className: 'banner-pro' }, { balance: 15000,   name: 'Aspiring Analyst 🤓',  className: 'banner-aspiring' }, { balance: 10000,   name: 'Novice Trader 🌱',     className: 'banner-novice' }, { balance: 7500,    name: 'Aspiring Bagholder 🛍️', className: 'banner-bagholder' }, { balance: 5000,    name: 'Expert Liquidator 📉',  className: 'banner-liquidator' }, { balance: 0,       name: 'Ramen Connoisseur 🍜',  className: 'banner-ramen' }];
 
             // --- Chart.js State ---
             const ctx = document.getElementById('trading-chart').getContext('2d');
@@ -305,36 +358,15 @@
             let currentTimeframe = 5;
 
             // --- Chart.js Setup ---
-            function createChart(persistedAnnotations = {}) {
-                if (tradingChart) tradingChart.destroy();
-                const config = { type: 'candlestick', data: { datasets: [{ label: 'Price', data: [] }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { type: 'time', time: { unit: 'minute' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } }, y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } } }, plugins: { tooltip: { enabled: false }, legend: { display: false }, annotation: { annotations: persistedAnnotations }, zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: true }, mode: 'x', onZoom: ({ chart }) => { const timespan = chart.scales.x.max - chart.scales.x.min; const timeframeMillis = currentTimeframe * 60 * 1000; visibleCandleCount = Math.max(20, Math.round(timespan / timeframeMillis)); uiNeedsUpdate = true; } } } } } };
-                tradingChart = new Chart(ctx, config);
-            }
+            function createChart(persistedAnnotations = {}) { if (tradingChart) tradingChart.destroy(); const config = { type: 'candlestick', data: { datasets: [{ label: 'Price', data: [] }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { type: 'time', time: { unit: 'minute' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } }, y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } } }, plugins: { tooltip: { enabled: false }, legend: { display: false }, annotation: { annotations: persistedAnnotations }, zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: true }, mode: 'x', onZoom: ({ chart }) => { const timespan = chart.scales.x.max - chart.scales.x.min; const timeframeMillis = currentTimeframe * 60 * 1000; visibleCandleCount = Math.max(20, Math.round(timespan / timeframeMillis)); uiNeedsUpdate = true; } } } } } }; tradingChart = new Chart(ctx, config); }
             
-            // --- Indicator Calculation Functions (collapsed for brevity) ---
+            // --- Indicator Calculation Functions (collapsed) ---
             function calculateEMA(data, period) { const k = 2 / (period + 1); let ema = [{ x: data[0].x, y: data[0].c }]; for (let i = 1; i < data.length; i++) { const newEma = (data[i].c * k) + (ema[i-1].y * (1 - k)); ema.push({ x: data[i].x, y: newEma }); } return ema; }
             function calculateRSI(data, period) { let rsi = []; let gains = 0; let losses = 0; for (let i = 1; i < data.length; i++) { const change = data[i].c - data[i-1].c; if (i < period) { if (change > 0) gains += change; else losses -= change; } else { if (i === period) { gains /= period; losses /= period; } else { gains = (gains * (period - 1) + (change > 0 ? change : 0)) / period; losses = (losses * (period - 1) + (change < 0 ? -change : 0)) / period; } if (losses === 0) { rsi.push({ x: data[i].x, y: 100 }); } else { const rs = gains / losses; rsi.push({ x: data[i].x, y: 100 - (100 / (1 + rs)) }); } } } return rsi; }
             function calculateSignals(data) { if (data.length < 22) return []; const signals = []; const emaFast = calculateEMA(data, 9); const emaSlow = calculateEMA(data, 21); const rsi = calculateRSI(data, 14); const rsiStartOffset = data.length - rsi.length; for (let i = 1; i < rsi.length; i++) { const dataIndex = i + rsiStartOffset; const trendScore = emaFast[dataIndex].y > emaSlow[dataIndex].y ? 1 : -1; const prevTrendScore = emaFast[dataIndex - 1].y > emaSlow[dataIndex - 1].y ? 1 : -1; const rsiValue = rsi[i].y; let currentSignal = 0; if (trendScore === 1 && prevTrendScore === -1 && rsiValue < 70) { currentSignal = 1; } else if (trendScore === -1 && prevTrendScore === 1 && rsiValue > 30) { currentSignal = -1; } if (currentSignal !== 0) { signals.push({ x: data[dataIndex].x, direction: currentSignal === 1 ? 'buy' : 'sell', price: data[dataIndex].l * 0.998, priceSell: data[dataIndex].h * 1.002 }); } } return signals; }
 
             // --- Bot Logic (Entry Only) ---
-            function botDecisionLoop() {
-                if (!isBotActive) return;
-                const aggregatedData = aggregateData(masterOneMinuteData, currentTimeframe);
-                if (aggregatedData.length < 22) return;
-                const signals = calculateSignals(aggregatedData);
-                const lastSignal = signals.length > 0 ? signals[signals.length - 1] : null;
-                if (!lastSignal || lastSignal.x <= lastBotSignalTime) return;
-                let botPosition = openPositions.find(p => p.isBotTrade);
-                if (!botPosition) {
-                    if (lastSignal.direction === 'buy') {
-                        executeTrade('long', account.balance * 0.25, 10, true);
-                        lastBotSignalTime = lastSignal.x;
-                    } else if (lastSignal.direction === 'sell') {
-                        executeTrade('short', account.balance * 0.25, 10, true);
-                        lastBotSignalTime = lastSignal.x;
-                    }
-                }
-            }
+            function botDecisionLoop() { if (!isBotActive) return; const aggregatedData = aggregateData(masterOneMinuteData, currentTimeframe); if (aggregatedData.length < 22) return; const signals = calculateSignals(aggregatedData); const lastSignal = signals.length > 0 ? signals[signals.length - 1] : null; if (!lastSignal || lastSignal.x <= lastBotSignalTime) return; let botPosition = openPositions.find(p => p.isBotTrade); if (!botPosition) { if (lastSignal.direction === 'buy') { executeTrade('long', account.balance * 0.25, 10, true); lastBotSignalTime = lastSignal.x; } else if (lastSignal.direction === 'sell') { executeTrade('short', account.balance * 0.25, 10, true); lastBotSignalTime = lastSignal.x; } } }
 
             // --- Game & Render Loops ---
             function gameLoop() {
@@ -349,39 +381,24 @@
                     pos.pnl = (pos.type === 'long') ? priceDiff * quantity : -priceDiff * quantity;
                     totalPnl += pos.pnl;
                     const pnlPercent = (pos.pnl / pos.margin) * 100;
-                    if (takeProfitPercent > 0 && pnlPercent >= takeProfitPercent) {
-                        positionsToClose.push(pos.id);
-                    } else if (stopLossPercent > 0 && pnlPercent <= -stopLossPercent) {
-                        positionsToClose.push(pos.id);
-                    }
+                    if (takeProfitPercent > 0 && pnlPercent >= takeProfitPercent) { positionsToClose.push(pos.id); } 
+                    else if (stopLossPercent > 0 && pnlPercent <= -stopLossPercent) { positionsToClose.push(pos.id); }
                 });
                 positionsToClose.forEach(id => closePosition(id));
                 account.equity = account.balance + totalPnl;
-                if (account.equity <= 0) {
-                    triggerGameOver();
-                    return;
-                }
+                if (account.equity <= 0) { triggerGameOver(); return; }
                 playerStats.highestEquity = Math.max(playerStats.highestEquity, account.equity);
                 updatePlayerTitle();
                 uiNeedsUpdate = true;
             }
-            function renderLoop() { if (uiNeedsUpdate && masterOneMinuteData.length > 0) { const aggregatedData = aggregateData(masterOneMinuteData, currentTimeframe); let displayData = (candleTypeSelect.value === 'heikinashi') ? toHeikinAshi(aggregatedData) : aggregatedData; if (displayData.length === 0) { requestAnimationFrame(renderLoop); return; } tradingChart.data.datasets[0].data = displayData; const currentAnnotations = tradingChart.options.plugins.annotation.annotations; Object.keys(currentAnnotations).forEach(key => { if (key.startsWith('signal-')) { delete currentAnnotations[key]; } }); if (showSignals) { const signals = calculateSignals(displayData); signals.forEach(signal => { currentAnnotations[`signal-${signal.x}`] = { type: 'label', xValue: signal.x, yValue: signal.direction === 'buy' ? signal.price : signal.priceSell, content: signal.direction === 'buy' ? '🔼' : '🔽', color: signal.direction === 'buy' ? '#26A69A' : '#EF5350', font: { size: 16 }, yAdjust: signal.direction === 'buy' ? 10 : -10 }; }); } const lastCandleTime = displayData[displayData.length - 1].x; const firstVisibleCandleIndex = Math.max(0, displayData.length - visibleCandleCount); const firstVisibleCandleTime = displayData[firstVisibleCandleIndex].x; tradingChart.options.scales.x.max = lastCandleTime; tradingChart.options.scales.x.min = firstVisibleCandleTime; tradingChart.update('none'); balanceEl.textContent = `$${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; equityEl.textContent = `$${account.equity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; const totalPnl = account.equity - account.balance; unrealizedPlEl.textContent = `$${totalPnl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; unrealizedPlEl.style.color = totalPnl >= 0 ? '#4ade80' : '#f87171'; updatePositionsList(); uiNeedsUpdate = false; } requestAnimationFrame(renderLoop); }
+            function renderLoop() { if (uiNeedsUpdate && masterOneMinuteData.length > 0) { const aggregatedData = aggregateData(masterOneMinuteData, currentTimeframe); let displayData = (candleTypeSelect.value === 'heikinashi') ? toHeikinAshi(aggregatedData) : aggregatedData; if (displayData.length === 0) { requestAnimationFrame(renderLoop); return; } tradingChart.data.datasets[0].data = displayData; const currentAnnotations = tradingChart.options.plugins.annotation.annotations; Object.keys(currentAnnotations).forEach(key => { if (key.startsWith('signal-')) { delete currentAnnotations[key]; } }); if (showSignals) { const signals = calculateSignals(displayData); signals.forEach(signal => { currentAnnotations[`signal-${signal.x}`] = { type: 'label', xValue: signal.x, yValue: signal.direction === 'buy' ? signal.price : signal.priceSell, content: signal.direction === 'buy' ? '🔼' : '🔽', color: signal.direction === 'buy' ? '#26A69A' : '#EF5350', font: { size: 16 }, yAdjust: signal.direction === 'buy' ? 10 : -10 }; }); } const lastCandleTime = displayData[displayData.length - 1].x; const firstVisibleCandleIndex = Math.max(0, displayData.length - visibleCandleCount); const firstVisibleCandleTime = displayData[firstVisibleCandleIndex].x; tradingChart.options.scales.x.max = lastCandleTime; tradingChart.options.scales.x.min = firstVisibleCandleTime; tradingChart.update('none'); const totalPnl = account.equity - account.balance; balanceEl.textContent = `$${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; equityEl.textContent = `$${account.equity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; unrealizedPlEl.textContent = `$${totalPnl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; unrealizedPlEl.style.color = totalPnl >= 0 ? '#4ade80' : '#f87171'; lastPlExpandedEl.textContent = `$${lastClosedPl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; lastPlExpandedEl.style.color = lastClosedPl >= 0 ? '#4ade80' : '#f87171'; balanceCollapsedEl.textContent = formatCurrencyAbbreviated(account.balance); unrealizedPlCollapsedEl.textContent = formatCurrencyAbbreviated(totalPnl); unrealizedPlCollapsedEl.style.color = totalPnl >= 0 ? '#4ade80' : '#f87171'; lastPlCollapsedEl.textContent = formatCurrencyAbbreviated(lastClosedPl); lastPlCollapsedEl.style.color = lastClosedPl >= 0 ? '#4ade80' : '#f87171'; tradeSizeCollapsedEl.textContent = `$${parseFloat(tradeSizeInput.value).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; leverageValueCollapsedEl.textContent = `(${leverageSlider.value}x)`; updatePositionsList(); uiNeedsUpdate = false; } requestAnimationFrame(renderLoop); }
             
             // --- Game Flow, Save/Load Functions ---
             function triggerGameOver() { if(gameLoopInterval) clearInterval(gameLoopInterval); playSound('lose'); updatePlayerTitle(); finalTitleEl.textContent = playerStats.playerTitle; peakEquityEl.textContent = `$${playerStats.highestEquity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; totalTradesEl.textContent = playerStats.totalTrades; gameOverModalEl.classList.remove('hidden'); }
-            function resetGame() { localStorage.removeItem('tradingGameSave'); account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE }; playerStats = { highestEquity: STARTING_BALANCE, totalTrades: 0, playerTitle: '' }; openPositions = []; lastBotSignalTime = 0; document.getElementById('positions-list').innerHTML = '<p id="no-positions-msg" class="text-gray-400">No open positions.</p>'; regenerateMasterData(); createChart(); updateUiFromState(); gameOverModalEl.classList.add('hidden'); setGameSpeed(gameSpeed); uiNeedsUpdate = true; }
+            function resetGame() { localStorage.removeItem('tradingGameSave'); account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE }; playerStats = { highestEquity: STARTING_BALANCE, totalTrades: 0, playerTitle: '' }; openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0; document.getElementById('positions-list').innerHTML = '<p id="no-positions-msg" class="text-gray-400">No open positions.</p>'; regenerateMasterData(); createChart(); updateUiFromState(); gameOverModalEl.classList.add('hidden'); setGameSpeed(gameSpeed); uiNeedsUpdate = true; }
             function saveGame() { 
-                const settings = {
-                    timeframe: currentTimeframe,
-                    candleType: candleTypeSelect.value,
-                    gameSpeed: gameSpeed,
-                    soundsEnabled: soundsEnabled,
-                    signalsEnabled: showSignals,
-                    botEnabled: isBotActive,
-                    tpPercent: takeProfitPercent,
-                    slPercent: stopLossPercent
-                };
-                const gameState = { account, playerStats, openPositions, masterOneMinuteData, lastPrice, lastTime, settings };
+                const settings = { timeframe: currentTimeframe, candleType: candleTypeSelect.value, gameSpeed: gameSpeed, soundsEnabled: soundsEnabled, signalsEnabled: showSignals, botEnabled: isBotActive, tpPercent: takeProfitPercent, slPercent: stopLossPercent, settingsPanelExpanded: settingsPanelExpanded, accountPanelExpanded: accountPanelExpanded, placeTradePanelExpanded: placeTradePanelExpanded };
+                const gameState = { account, playerStats, openPositions, masterOneMinuteData, lastPrice, lastTime, lastClosedPl, settings };
                 localStorage.setItem('tradingGameSave', JSON.stringify(gameState)); 
             }
             function loadGame() {
@@ -389,50 +406,36 @@
                 if (!savedStateJSON) return false;
                 try {
                     const savedState = JSON.parse(savedStateJSON);
-                    account = savedState.account;
-                    playerStats = savedState.playerStats;
-                    openPositions = savedState.openPositions;
-                    masterOneMinuteData = savedState.masterOneMinuteData;
-                    lastPrice = savedState.lastPrice;
-                    lastTime = savedState.lastTime;
+                    account = savedState.account; playerStats = savedState.playerStats; openPositions = savedState.openPositions; masterOneMinuteData = savedState.masterOneMinuteData; lastPrice = savedState.lastPrice; lastTime = savedState.lastTime; lastClosedPl = savedState.lastClosedPl || 0;
                     if (savedState.settings) {
                         const settings = savedState.settings;
-                        currentTimeframe = parseInt(settings.timeframe, 10) || 5;
-                        gameSpeed = parseInt(settings.gameSpeed, 10) || 1;
-                        soundsEnabled = settings.soundsEnabled !== false;
-                        showSignals = settings.signalsEnabled === true;
-                        isBotActive = settings.botEnabled === true;
-                        takeProfitPercent = parseFloat(settings.tpPercent) || 5;
-                        stopLossPercent = parseFloat(settings.slPercent) || 2;
+                        currentTimeframe = parseInt(settings.timeframe, 10) || 5; gameSpeed = parseInt(settings.gameSpeed, 10) || 1; soundsEnabled = settings.soundsEnabled !== false; showSignals = settings.signalsEnabled === true; isBotActive = settings.botEnabled === true; takeProfitPercent = parseFloat(settings.tpPercent) || 5; stopLossPercent = parseFloat(settings.slPercent) || 2; settingsPanelExpanded = settings.settingsPanelExpanded !== false; accountPanelExpanded = settings.accountPanelExpanded !== false; placeTradePanelExpanded = settings.placeTradePanelExpanded !== false;
                     }
-                    showMessage("Game progress loaded!", "info");
-                    return true;
+                    showMessage("Game progress loaded!", "info"); return true;
                 } catch (e) { console.error("Failed to load saved game state:", e); localStorage.removeItem('tradingGameSave'); return false; }
             }
             
             // --- Initial Setup ---
-            function init() {
-                const gameLoaded = loadGame();
-                updateUiFromState();
-                if (!gameLoaded) regenerateMasterData();
-                const initialAnnotations = {};
-                openPositions.forEach(pos => { initialAnnotations[pos.id] = createAnnotationForPosition(pos); });
-                createChart(initialAnnotations);
-                setGameSpeed(gameSpeed);
-                requestAnimationFrame(renderLoop);
-            }
+            function init() { const gameLoaded = loadGame(); updateUiFromState(); if (!gameLoaded) regenerateMasterData(); const initialAnnotations = {}; openPositions.forEach(pos => { initialAnnotations[pos.id] = createAnnotationForPosition(pos); }); createChart(initialAnnotations); setGameSpeed(gameSpeed); requestAnimationFrame(renderLoop); }
 
             // --- Event Listeners ---
+            accountTitleEl.addEventListener('click', () => { playSound('click'); accountPanelExpanded = !accountPanelExpanded; updateUiFromState(); });
+            settingsTitleEl.addEventListener('click', () => { playSound('click'); settingsPanelExpanded = !settingsPanelExpanded; updateUiFromState(); });
+            placeTradeTitleEl.addEventListener('click', () => { playSound('click'); placeTradePanelExpanded = !placeTradePanelExpanded; updateUiFromState(); });
+            timeframeButtonsEl.addEventListener('click', (e) => { const button = e.target.closest('.settings-btn'); if (button) { playSound('click'); currentTimeframe = parseInt(button.dataset.value, 10); visibleCandleCount = DEFAULT_VISIBLE_CANDLES; uiNeedsUpdate = true; updateUiFromState(); } });
+            speedButtonsEl.addEventListener('click', (e) => { const button = e.target.closest('.settings-btn'); if (button) { playSound('click'); gameSpeed = parseInt(button.dataset.value, 10); setGameSpeed(gameSpeed); updateUiFromState(); } });
+            tpButtonsEl.addEventListener('click', (e) => { const button = e.target.closest('.settings-btn'); if (button) { playSound('click'); takeProfitPercent = parseFloat(button.dataset.value); updateUiFromState(); } });
+            slButtonsEl.addEventListener('click', (e) => { const button = e.target.closest('.settings-btn'); if (button) { playSound('click'); stopLossPercent = parseFloat(button.dataset.value); updateUiFromState(); } });
+            leverageButtonsCollapsedEl.addEventListener('click', (e) => { const button = e.target.closest('.settings-btn'); if (button) { playSound('click'); leverageSlider.value = button.dataset.value; leverageValueEl.textContent = `${button.dataset.value}x`; updateUiFromState(); } });
             soundsToggle.addEventListener('change', () => { soundsEnabled = soundsToggle.checked; playSound('click'); });
             signalsToggle.addEventListener('change', () => { showSignals = signalsToggle.checked; uiNeedsUpdate = true; });
             botToggle.addEventListener('change', () => { isBotActive = botToggle.checked; showMessage(isBotActive ? "Trading Bot Activated! 🤖" : "Trading Bot Deactivated.", "info"); });
-            tpInput.addEventListener('change', (e) => { const val = parseFloat(e.target.value); if (!isNaN(val) && val >= 0) { takeProfitPercent = val; } else { e.target.value = takeProfitPercent; } });
-            slInput.addEventListener('change', (e) => { const val = parseFloat(e.target.value); if (!isNaN(val) && val >= 0) { stopLossPercent = val; } else { e.target.value = stopLossPercent; } });
-            leverageSlider.addEventListener('input', (e) => { leverageValueEl.textContent = `${e.target.value}x`; });
-            speedSlider.addEventListener('input', (e) => { gameSpeed = parseInt(e.target.value, 10); speedValueEl.textContent = `${gameSpeed}x`; setGameSpeed(gameSpeed); });
+            leverageSlider.addEventListener('input', (e) => { leverageValueEl.textContent = `${e.target.value}x`; updateUiFromState(); });
             resetViewBtn.addEventListener('click', () => { playSound('click'); visibleCandleCount = DEFAULT_VISIBLE_CANDLES; uiNeedsUpdate = true; });
-            timeframeSelect.addEventListener('change', (e) => { currentTimeframe = parseInt(e.target.value, 10); visibleCandleCount = DEFAULT_VISIBLE_CANDLES; uiNeedsUpdate = true; });
-            sizePercentageButtonsEl.addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON' && e.target.dataset.percent) { playSound('click'); const newSize = account.balance * parseFloat(e.target.dataset.percent); tradeSizeInput.value = newSize.toFixed(2); } });
+            const sizePercentHandler = (e) => { const button = e.target.closest('button'); if (button && button.dataset.percent) { playSound('click'); const newSize = account.balance * parseFloat(button.dataset.percent); tradeSizeInput.value = newSize.toFixed(2); uiNeedsUpdate = true; } };
+            sizePercentageButtonsEl.addEventListener('click', sizePercentHandler);
+            sizePercentageButtonsCollapsedEl.addEventListener('click', sizePercentHandler);
+            tradeSizeInput.addEventListener('input', () => { uiNeedsUpdate = true; });
             longButton.addEventListener('click', () => placeTrade('long'));
             shortButton.addEventListener('click', () => placeTrade('short'));
             candleTypeSelect.addEventListener('change', () => uiNeedsUpdate = true);
@@ -440,18 +443,21 @@
             window.addEventListener('beforeunload', saveGame);
 
             // --- Utility Functions ---
+            function updateActiveButton(containerEl, value, activeClass) { containerEl.querySelectorAll('.settings-btn, .bg-gray-700').forEach(btn => { btn.classList.toggle(activeClass, btn.dataset.value == value); }); }
             function updateUiFromState() {
-                timeframeSelect.value = currentTimeframe;
+                updateActiveButton(timeframeButtonsEl, currentTimeframe, 'active-btn');
+                updateActiveButton(speedButtonsEl, gameSpeed, 'active-btn');
+                updateActiveButton(tpButtonsEl, takeProfitPercent, 'active-btn');
+                updateActiveButton(slButtonsEl, stopLossPercent, 'active-btn');
+                updateActiveButton(leverageButtonsCollapsedEl, leverageSlider.value, 'active-btn');
                 candleTypeSelect.value = candleTypeSelect.value || 'candlestick';
-                speedSlider.value = gameSpeed;
-                speedValueEl.textContent = `${gameSpeed}x`;
-                soundsToggle.checked = soundsEnabled;
-                signalsToggle.checked = showSignals;
-                botToggle.checked = isBotActive;
-                tpInput.value = takeProfitPercent;
-                slInput.value = stopLossPercent;
+                soundsToggle.checked = soundsEnabled; signalsToggle.checked = showSignals; botToggle.checked = isBotActive; 
+                extraSettingsEl.classList.toggle('hidden', !settingsPanelExpanded); settingsToggleIconEl.textContent = settingsPanelExpanded ? '▲' : '▼';
+                accountDetailsExpandedEl.classList.toggle('hidden', !accountPanelExpanded); accountDetailsCollapsedEl.classList.toggle('hidden', accountPanelExpanded); accountToggleIconEl.textContent = accountPanelExpanded ? '▲' : '▼';
+                placeTradeExpandedEl.classList.toggle('hidden', !placeTradePanelExpanded); placeTradeCollapsedEl.classList.toggle('hidden', placeTradePanelExpanded); placeTradeToggleIconEl.textContent = placeTradePanelExpanded ? '▲' : '▼';
                 updatePlayerTitle();
             }
+            function formatCurrencyAbbreviated(value) { const sign = value < 0 ? '-' : ''; const absValue = Math.abs(value); if (absValue >= 1e6) return `${sign}$${(absValue / 1e6).toFixed(2)}M`; if (absValue >= 1e3) return `${sign}$${(absValue / 1e3).toFixed(1)}k`; return `${sign}$${absValue.toFixed(2)}`; }
             function createAnnotationForPosition(pos) { return { type: 'line', yMin: pos.entryPrice, yMax: pos.entryPrice, borderColor: pos.type === 'long' ? '#26A69A' : '#EF5350', borderWidth: 2, borderDash: [6, 6], label: { content: `${pos.isBotTrade ? '🤖 ' : ''}${pos.type.toUpperCase()} @ ${pos.entryPrice.toFixed(2)}`, enabled: true, position: 'end', backgroundColor: 'rgba(0,0,0,0.6)' } }; }
             function updatePlayerTitle() { let newTitleData = titles[titles.length - 1]; for (const title of titles) { if (account.balance >= title.balance) { newTitleData = title; break; } } if (newTitleData.name !== playerStats.playerTitle) { playerStats.playerTitle = newTitleData.name; playerTitleEl.textContent = newTitleData.name; const bannerClasses = titles.map(t => t.className); titleBannerEl.classList.remove(...bannerClasses); titleBannerEl.classList.add(newTitleData.className); titleBannerEl.classList.remove('flash-animation'); void titleBannerEl.offsetWidth; titleBannerEl.classList.add('flash-animation'); } }
             function generateOneMinuteCandle() { const changePercent = (Math.random() - 0.5) * 0.005; const change = lastPrice * changePercent; const open = lastPrice; const close = open + change; const high = Math.max(open, close) + (Math.random() * Math.abs(change) * 2); const low = Math.min(open, close) - (Math.random() * Math.abs(change) * 2); lastPrice = close; lastTime += 60000; return { x: lastTime, o: open, h: high, l: low, c: close }; }
@@ -460,7 +466,7 @@
             function toHeikinAshi(data) { if (data.length < 1) return []; const haData = []; let prevHaOpen = data[0].o; let prevHaClose = data[0].c; for (let i = 0; i < data.length; i++) { const curr = data[i]; const haClose = (curr.o + curr.h + curr.l + curr.c) / 4; const haOpen = (prevHaOpen + prevHaClose) / 2; const haHigh = Math.max(curr.h, haOpen, haClose); const haLow = Math.min(curr.l, haOpen, haClose); haData.push({ x: curr.x, o: haOpen, h: haHigh, l: haLow, c: haClose }); prevHaOpen = haOpen; prevHaClose = haClose; } return haData; }
             function placeTrade(type) { playSound('click'); const size = parseFloat(tradeSizeInput.value); const leverage = parseInt(leverageSlider.value); executeTrade(type, size, leverage, false); }
             function executeTrade(type, margin, leverage, isBot = false) { if (isNaN(margin) || margin <= 0) { if (!isBot) showMessage("Please enter a valid trade size.", "error"); return; } if (margin > account.balance) { if (!isBot) showMessage("Trade size cannot exceed your balance.", "error"); return; } playSound('open'); playerStats.totalTrades++; const position = { id: `pos-${Date.now()}`, type, margin, leverage, entryPrice: lastPrice, pnl: 0, isBotTrade: isBot, }; const annotation = createAnnotationForPosition(position); tradingChart.options.plugins.annotation.annotations[position.id] = annotation; openPositions.push(position); uiNeedsUpdate = true; }
-            function closePosition(id) { const positionIndex = openPositions.findIndex(p => p.id === id); if (positionIndex > -1) { const position = openPositions[positionIndex]; if (position.pnl >= 0) playSound('win'); else playSound('lose'); account.balance += position.pnl; delete tradingChart.options.plugins.annotation.annotations[id]; document.getElementById(id)?.remove(); openPositions.splice(positionIndex, 1); uiNeedsUpdate = true; } }
+            function closePosition(id) { const positionIndex = openPositions.findIndex(p => p.id === id); if (positionIndex > -1) { const position = openPositions[positionIndex]; if (position.pnl >= 0) playSound('win'); else playSound('lose'); lastClosedPl = position.pnl; account.balance += position.pnl; delete tradingChart.options.plugins.annotation.annotations[id]; document.getElementById(id)?.remove(); openPositions.splice(positionIndex, 1); uiNeedsUpdate = true; } }
             function updatePositionsList() { const noMsg = document.getElementById('no-positions-msg'); if(noMsg) noMsg.style.display = openPositions.length === 0 ? 'block' : 'none'; openPositions.forEach(pos => { let posEl = document.getElementById(pos.id); if (!posEl) { posEl = document.createElement('div'); posEl.id = pos.id; posEl.innerHTML = `<span class="font-bold"></span><span></span><span></span><span></span><button class="close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded">Close</button>`; positionsListEl.appendChild(posEl); posEl.querySelector('.close-pos-btn').addEventListener('click', () => { playSound('click'); closePosition(pos.id); }); } const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'; const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30'; const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400'; posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`; const fields = posEl.children; fields[0].className = `font-bold ${typeColor}`; fields[0].textContent = (pos.isBotTrade ? '🤖 ' : '') + pos.type.toUpperCase(); fields[1].textContent = `$${pos.margin.toFixed(2)} (${pos.leverage}x)`; fields[2].textContent = pos.entryPrice.toFixed(2); fields[3].className = pnlColor; fields[3].textContent = pos.pnl.toFixed(2); }); }
             function setGameSpeed(speed) { if (gameLoopInterval) clearInterval(gameLoopInterval); const intervalTime = Math.max(1, 1000 / speed); gameLoopInterval = setInterval(gameLoop, intervalTime); }
             let messageTimeout; function showMessage(text, type = "info", duration = 3000) { const messageBox = document.getElementById('message-box'); const messageText = document.getElementById('message-text'); if (messageTimeout) clearTimeout(messageTimeout); messageBox.style.backgroundColor = type === 'error' ? '#dc2626' : '#4f46e5'; messageText.textContent = text; messageBox.classList.remove('opacity-0', 'pointer-events-none'); messageTimeout = setTimeout(() => { messageBox.classList.add('opacity-0'); setTimeout(() => messageBox.classList.add('pointer-events-none'), 300); }, duration); }
