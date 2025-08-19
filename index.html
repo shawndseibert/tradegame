@@ -184,6 +184,7 @@
                             y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } }
                         },
                         plugins: {
+                            tooltip: { enabled: false }, // <-- THIS LINE DISABLES THE TOOLTIP
                             legend: { display: false },
                             annotation: { annotations: persistedAnnotations },
                             zoom: {
