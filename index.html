@@ -77,7 +77,6 @@
             color: var(--theme-color-light);
         }
         .theme-text { color: var(--theme-color-light); }
-        .theme-bg-hover:hover { background-color: var(--theme-color); }
         input[type="color"] { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 40px; height: 24px; background-color: transparent; border: none; cursor: pointer; }
         input[type="color"]::-webkit-color-swatch { border-radius: 6px; border: 1px solid #4B5563; }
         input[type="color"]::-moz-color-swatch { border-radius: 6px; border: 1px solid #4B5563; }
@@ -190,20 +189,25 @@
                            <label for="trade-size-input" class="block text-sm font-medium text-gray-300">Trade Size</label>
                            <input type="number" id="trade-size-input" value="100" class="w-28 bg-gray-800 border border-gray-600 rounded-md p-1 text-sm text-right focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
-                         <input type="range" id="size-slider-expanded" min="1" max="100" value="10">
-                         <div class="snap-labels flex justify-between text-xs mt-1">
-                             <span>25%</span><span>50%</span><span>75%</span><span>100%</span>
-                         </div>
+                         <div id="size-percentage-buttons" class="grid grid-cols-4 gap-2 mt-1">
+                            <button data-percent="0.25" class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors">25%</button>
+                            <button data-percent="0.50" class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors">50%</button>
+                            <button data-percent="0.75" class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors">75%</button>
+                            <button data-percent="1.00" class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors">100%</button>
+                        </div>
                     </div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label for="leverage-slider-expanded" class="block text-sm font-medium text-gray-300">Leverage</label>
+                            <label class="block text-sm font-medium text-gray-300">Leverage</label>
                             <span id="leverage-value" class="font-semibold theme-text text-sm">10x</span>
                         </div>
-                        <input type="range" id="leverage-slider-expanded" min="1" max="100" value="10">
-                        <div class="snap-labels flex justify-between text-xs mt-1">
-                             <span>1x</span><span>25x</span><span>50x</span><span>75x</span><span>100x</span>
-                         </div>
+                         <div id="leverage-buttons-expanded" class="grid grid-cols-5 gap-1 mt-1">
+                            <button data-value="1" class="settings-btn p-1 text-xs rounded">1x</button>
+                            <button data-value="10" class="settings-btn p-1 text-xs rounded">10x</button>
+                            <button data-value="25" class="settings-btn p-1 text-xs rounded">25x</button>
+                            <button data-value="50" class="settings-btn p-1 text-xs rounded">50x</button>
+                            <button data-value="100" class="settings-btn p-1 text-xs rounded">100x</button>
+                        </div>
                     </div>
                     <div class="border-t border-gray-700 pt-4 space-y-3">
                          <div>
@@ -235,18 +239,18 @@
             <div id="place-trade-collapsed" class="hidden space-y-3">
                 <div class="flex justify-between items-center text-sm">
                     <span class="font-medium text-gray-300 shrink-0">Size</span>
-                    <span id="size-value-collapsed" class="font-semibold theme-text w-12 text-left mx-2"></span>
+                    <span id="size-value-collapsed" class="font-semibold theme-text w-12 text-left mx-2">10%</span>
                     <div class="flex-grow relative">
                         <input type="range" id="size-slider-collapsed" min="1" max="100" value="10">
                     </div>
-                    <span id="trade-size-dollar-collapsed" class="font-semibold theme-text w-16 text-right"></span>
+                    <span id="trade-size-dollar-collapsed" class="font-semibold theme-text w-16 text-right">$1k</span>
                 </div>
                 <div class="flex justify-between items-center text-sm">
                     <span class="font-medium text-gray-300 shrink-0">Leverage</span>
                      <div class="flex-grow mx-3 relative">
                         <input type="range" id="leverage-slider-collapsed" min="1" max="100" value="10">
                     </div>
-                    <span id="leverage-value-collapsed" class="font-semibold theme-text w-12 text-right"></span>
+                    <span id="leverage-value-collapsed" class="font-semibold theme-text w-12 text-right">(10x)</span>
                 </div>
             </div>
             
@@ -255,7 +259,7 @@
                 <button id="short-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Short</button>
             </div>
         </div>
-        
+
         <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-3">
              <h2 id="account-title" class="collapsible-title text-xl font-bold mb-3 flex justify-between items-center transition-colors">
                 <span>Account</span>
@@ -333,17 +337,16 @@
             const balanceEl = document.getElementById('balance');
             const equityEl = document.getElementById('equity');
             const unrealizedPlEl = document.getElementById('unrealized-pl');
-            const leverageSliderExpanded = document.getElementById('leverage-slider-expanded');
-            const leverageSliderCollapsed = document.getElementById('leverage-slider-collapsed');
             const leverageValueEl = document.getElementById('leverage-value');
             const tradeSizeInput = document.getElementById('trade-size-input');
-            const sizeSliderExpanded = document.getElementById('size-slider-expanded');
             const sizeSliderCollapsed = document.getElementById('size-slider-collapsed');
+            const leverageSliderCollapsed = document.getElementById('leverage-slider-collapsed');
             const longButton = document.getElementById('long-button');
             const shortButton = document.getElementById('short-button');
             const positionsListEl = document.getElementById('positions-list');
             const candleTypeSelect = document.getElementById('candle-type');
             const resetViewBtn = document.getElementById('reset-view-btn');
+            const sizePercentageButtonsEl = document.getElementById('size-percentage-buttons');
             const titleBannerEl = document.getElementById('title-banner');
             const playerTitleEl = document.getElementById('player-title');
             const gameOverModalEl = document.getElementById('game-over-modal');
@@ -354,6 +357,7 @@
             const zoomInBtn = document.getElementById('zoom-in-btn');
             const zoomOutBtn = document.getElementById('zoom-out-btn');
             const themeColorPicker = document.getElementById('theme-color-picker');
+            const leverageButtonsExpandedEl = document.getElementById('leverage-buttons-expanded');
 
             // --- Game State ---
             const STARTING_BALANCE = 10000;
@@ -379,6 +383,8 @@
             let isAutoScrolling = true;
             let zoomAnimation = null;
             let themeColor = '#4F46E5';
+            let currentLeverage = 10;
+            let currentTradeSizePercent = 10;
 
             // --- Sound Effects (using Howler.js) ---
             const sounds = { click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }), open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }), win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }), lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }) };
@@ -482,10 +488,10 @@
                         unrealizedPlCollapsedEl.style.color = totalPnl >= 0 ? '#4ade80' : '#f87171';
                         lastPlCollapsedEl.textContent = formatCurrencyAbbreviated(lastClosedPl);
                         lastPlCollapsedEl.style.color = lastClosedPl >= 0 ? '#4ade80' : '#f87171';
-                        sizeValueCollapsedEl.textContent = `${sizeSliderCollapsed.value}%`;
-                        const sizeInDollars = account.balance * (sizeSliderCollapsed.value / 100);
+                        sizeValueCollapsedEl.textContent = `${currentTradeSizePercent}%`;
+                        const sizeInDollars = account.balance * (currentTradeSizePercent / 100);
                         tradeSizeDollarCollapsedEl.textContent = formatCurrencyAbbreviated(sizeInDollars);
-                        leverageValueCollapsedEl.textContent = `(${leverageSliderCollapsed.value}x)`;
+                        leverageValueCollapsedEl.textContent = `(${currentLeverage}x)`;
                         
                         tradingChart.update('none');
                         updatePositionsList();
@@ -498,7 +504,7 @@
             function triggerGameOver() { if(gameLoopInterval) clearInterval(gameLoopInterval); playSound('lose'); updatePlayerTitle(); finalTitleEl.textContent = playerStats.playerTitle; peakEquityEl.textContent = `$${playerStats.highestEquity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; totalTradesEl.textContent = playerStats.totalTrades; gameOverModalEl.classList.remove('hidden'); }
             function resetGame() { localStorage.removeItem('tradingGameSave'); account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE }; playerStats = { highestEquity: STARTING_BALANCE, totalTrades: 0, playerTitle: '' }; openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0; document.getElementById('positions-list').innerHTML = '<p id="no-positions-msg" class="text-gray-400">No open positions.</p>'; regenerateMasterData(); createChart(); updateUiFromState(); gameOverModalEl.classList.add('hidden'); setGameSpeed(gameSpeed); }
             function saveGame() { 
-                const settings = { timeframe: currentTimeframe, candleType: candleTypeSelect.value, gameSpeed: gameSpeed, soundsEnabled: soundsEnabled, signalsEnabled: showSignals, botEnabled: isBotActive, tpPercent: takeProfitPercent, slPercent: stopLossPercent, settingsPanelExpanded: settingsPanelExpanded, accountPanelExpanded: accountPanelExpanded, placeTradePanelExpanded: placeTradePanelExpanded, tradeSizePercent: sizeSliderExpanded.value, leverage: leverageSliderExpanded.value, themeColor: themeColor };
+                const settings = { timeframe: currentTimeframe, candleType: candleTypeSelect.value, gameSpeed: gameSpeed, soundsEnabled: soundsEnabled, signalsEnabled: showSignals, botEnabled: isBotActive, tpPercent: takeProfitPercent, slPercent: stopLossPercent, settingsPanelExpanded: settingsPanelExpanded, accountPanelExpanded: accountPanelExpanded, placeTradePanelExpanded: placeTradePanelExpanded, tradeSizePercent: currentTradeSizePercent, leverage: currentLeverage, themeColor: themeColor };
                 const gameState = { account, playerStats, openPositions, masterOneMinuteData, lastPrice, lastTime, lastClosedPl, settings };
                 localStorage.setItem('tradingGameSave', JSON.stringify(gameState)); 
             }
@@ -511,8 +517,8 @@
                     if (savedState.settings) {
                         const settings = savedState.settings;
                         currentTimeframe = parseInt(settings.timeframe, 10) || 5; gameSpeed = parseInt(settings.gameSpeed, 10) || 1; soundsEnabled = settings.soundsEnabled !== false; showSignals = settings.signalsEnabled === true; isBotActive = settings.botEnabled === true; takeProfitPercent = parseFloat(settings.tpPercent) || 5; stopLossPercent = parseFloat(settings.slPercent) || 2; settingsPanelExpanded = settings.settingsPanelExpanded !== false; accountPanelExpanded = settings.accountPanelExpanded !== false; placeTradePanelExpanded = settings.placeTradePanelExpanded !== false;
-                        sizeSliderExpanded.value = settings.tradeSizePercent || 10;
-                        leverageSliderExpanded.value = settings.leverage || 10;
+                        currentTradeSizePercent = settings.tradeSizePercent || 10;
+                        currentLeverage = settings.leverage || 10;
                         themeColor = settings.themeColor || '#4F46E5';
                     }
                     showMessage("Game progress loaded!", "info"); return true;
@@ -558,24 +564,45 @@
                     }
                 });
             }
-            setupSnapSlider(sizeSliderExpanded, [25, 50, 75, 100]);
             setupSnapSlider(sizeSliderCollapsed, [25, 50, 75, 100]);
-            setupSnapSlider(leverageSliderExpanded, [1, 25, 50, 75, 100]);
             setupSnapSlider(leverageSliderCollapsed, [1, 25, 50, 75, 100]);
             setupSnapSlider(speedSliderEl, [1, 10, 50, 100, 200]);
 
-            // --- Slider Sync and Update Logic ---
-            function syncAndUpdateSliders(source, target, valueDisplay, isLeverage) {
-                const value = parseInt(source.value);
-                target.value = value;
-                if (isLeverage) { valueDisplay.textContent = `${value}x`; } 
-                else { const sizeInDollars = account.balance * (value / 100); tradeSizeInput.value = sizeInDollars.toFixed(2); }
+            // --- Control Sync and Update Logic ---
+            sizePercentageButtonsEl.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if(button && button.dataset.percent) {
+                    playSound('click');
+                    currentTradeSizePercent = parseFloat(button.dataset.percent) * 100;
+                    updateUiFromState();
+                }
+            });
+            leverageButtonsExpandedEl.addEventListener('click', (e) => {
+                const button = e.target.closest('.settings-btn');
+                if (button) {
+                    playSound('click');
+                    currentLeverage = parseInt(button.dataset.value, 10);
+                    updateUiFromState();
+                }
+            });
+
+            function handleLeverageInput(e) {
+                currentLeverage = parseInt(e.target.value, 10);
+                updateUiFromState();
             }
-            leverageSliderExpanded.addEventListener('input', () => syncAndUpdateSliders(leverageSliderExpanded, leverageSliderCollapsed, leverageValueEl, true));
-            leverageSliderCollapsed.addEventListener('input', () => syncAndUpdateSliders(leverageSliderCollapsed, leverageSliderExpanded, leverageValueEl, true));
-            sizeSliderExpanded.addEventListener('input', () => syncAndUpdateSliders(sizeSliderExpanded, sizeSliderCollapsed, sizeValueCollapsedEl, false));
-            sizeSliderCollapsed.addEventListener('input', () => syncAndUpdateSliders(sizeSliderCollapsed, sizeSliderExpanded, sizeValueCollapsedEl, false));
-            tradeSizeInput.addEventListener('input', () => { const percent = (parseFloat(tradeSizeInput.value) / account.balance) * 100; if(percent >=1 && percent <= 100) { sizeSliderExpanded.value = percent; sizeSliderCollapsed.value = percent; } });
+            leverageSliderCollapsed.addEventListener('input', handleLeverageInput);
+            function handleSizeInput(e){
+                currentTradeSizePercent = parseInt(e.target.value, 10);
+                updateUiFromState();
+            }
+            sizeSliderCollapsed.addEventListener('input', handleSizeInput);
+            tradeSizeInput.addEventListener('input', () => {
+                const percent = (parseFloat(tradeSizeInput.value) / account.balance) * 100;
+                if (percent >= 1 && percent <= 100) {
+                    currentTradeSizePercent = Math.round(percent);
+                    updateUiFromState();
+                }
+            });
             speedSliderEl.addEventListener('input', (e) => { gameSpeed = parseInt(e.target.value, 10); speedValueEl.textContent = `${gameSpeed}x`; setGameSpeed(gameSpeed); });
 
             // --- Utility Functions ---
@@ -596,6 +623,8 @@
                 updateActiveButton(timeframeButtonsEl, currentTimeframe, 'active-setting-btn');
                 updateActiveButton(tpButtonsEl, takeProfitPercent, 'active-setting-btn');
                 updateActiveButton(slButtonsEl, stopLossPercent, 'active-setting-btn');
+                updateActiveButton(leverageButtonsExpandedEl, currentLeverage, 'active-setting-btn');
+                
                 candleTypeSelect.value = candleTypeSelect.value || 'candlestick';
                 soundsToggle.checked = soundsEnabled; signalsToggle.checked = showSignals; botToggle.checked = isBotActive; 
                 extraSettingsEl.classList.toggle('hidden', !settingsPanelExpanded); settingsToggleIconEl.textContent = settingsPanelExpanded ? '▲' : '▼';
@@ -604,8 +633,14 @@
                 
                 speedSliderEl.value = gameSpeed;
                 speedValueEl.textContent = `${gameSpeed}x`;
-                syncAndUpdateSliders(leverageSliderExpanded, leverageSliderCollapsed, leverageValueEl, true);
-                syncAndUpdateSliders(sizeSliderExpanded, sizeSliderCollapsed, sizeValueCollapsedEl, false);
+                
+                leverageSliderCollapsed.value = currentLeverage;
+                leverageValueEl.textContent = `${currentLeverage}x`;
+                
+                sizeSliderCollapsed.value = currentTradeSizePercent;
+                const sizeInDollars = account.balance * (currentTradeSizePercent / 100);
+                tradeSizeInput.value = sizeInDollars.toFixed(2);
+                
                 updatePlayerTitle();
             }
             function formatCurrencyAbbreviated(value) { const sign = value < 0 ? '-' : ''; const absValue = Math.abs(value); if (absValue >= 1e6) return `${sign}$${(absValue / 1e6).toFixed(2)}M`; if (absValue >= 1e3) return `${sign}$${(absValue / 1e3).toFixed(1)}k`; return `${sign}$${absValue.toFixed(2)}`; }
@@ -615,7 +650,7 @@
             function regenerateMasterData() { masterOneMinuteData = []; lastPrice = 50000; const historyMinutes = 5000; lastTime = new Date().getTime() - (historyMinutes * 60000); for (let i = 0; i < historyMinutes; i++) masterOneMinuteData.push(generateOneMinuteCandle()); }
             function aggregateData(data, timeframeMinutes) { if (timeframeMinutes <= 1) return data; const aggregated = []; let currentCandle = null; for (const candle of data) { const candleTime = new Date(candle.x); const intervalStart = new Date(candleTime); intervalStart.setMinutes(Math.floor(candleTime.getMinutes() / timeframeMinutes) * timeframeMinutes, 0, 0); if (!currentCandle || currentCandle.x !== intervalStart.getTime()) { if (currentCandle) aggregated.push(currentCandle); currentCandle = { x: intervalStart.getTime(), o: candle.o, h: candle.h, l: candle.l, c: candle.c }; } else { currentCandle.h = Math.max(currentCandle.h, candle.h); currentCandle.l = Math.min(currentCandle.l, candle.l); currentCandle.c = candle.c; } } if (currentCandle) aggregated.push(currentCandle); return aggregated; }
             function toHeikinAshi(data) { if (data.length < 1) return []; const haData = []; let prevHaOpen = data[0].o; let prevHaClose = data[0].c; for (let i = 0; i < data.length; i++) { const curr = data[i]; const haClose = (curr.o + curr.h + curr.l + curr.c) / 4; const haOpen = (prevHaOpen + prevHaClose) / 2; const haHigh = Math.max(curr.h, haOpen, haClose); const haLow = Math.min(curr.l, haOpen, haClose); haData.push({ x: curr.x, o: haOpen, h: haHigh, l: haLow, c: haClose }); prevHaOpen = haOpen; prevHaClose = haClose; } return haData; }
-            function placeTrade(type) { playSound('click'); const size = parseFloat(tradeSizeInput.value); const leverage = parseInt(leverageSliderExpanded.value); executeTrade(type, size, leverage, false); }
+            function placeTrade(type) { playSound('click'); const size = parseFloat(tradeSizeInput.value); const leverage = parseInt(currentLeverage); executeTrade(type, size, leverage, false); }
             function executeTrade(type, margin, leverage, isBot = false) { if (isNaN(margin) || margin <= 0) { if (!isBot) showMessage("Please enter a valid trade size.", "error"); return; } if (margin > account.balance) { if (!isBot) showMessage("Trade size cannot exceed your balance.", "error"); return; } playSound('open'); playerStats.totalTrades++; const position = { id: `pos-${Date.now()}`, type, margin, leverage, entryPrice: lastPrice, pnl: 0, isBotTrade: isBot, }; const annotation = createAnnotationForPosition(position); tradingChart.options.plugins.annotation.annotations[position.id] = annotation; openPositions.push(position); }
             function closePosition(id) { const positionIndex = openPositions.findIndex(p => p.id === id); if (positionIndex > -1) { const position = openPositions[positionIndex]; if (position.pnl >= 0) playSound('win'); else playSound('lose'); lastClosedPl = position.pnl; account.balance += position.pnl; delete tradingChart.options.plugins.annotation.annotations[id]; document.getElementById(id)?.remove(); openPositions.splice(positionIndex, 1); } }
             function updatePositionsList() { const noMsg = document.getElementById('no-positions-msg'); if(noMsg) noMsg.style.display = openPositions.length === 0 ? 'block' : 'none'; openPositions.forEach(pos => { let posEl = document.getElementById(pos.id); if (!posEl) { posEl = document.createElement('div'); posEl.id = pos.id; posEl.innerHTML = `<span class="font-bold"></span><span></span><span></span><span></span><button class="close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded">Close</button>`; positionsListEl.appendChild(posEl); posEl.querySelector('.close-pos-btn').addEventListener('click', () => { playSound('click'); closePosition(pos.id); }); } const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'; const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30'; const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400'; posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`; const fields = posEl.children; fields[0].className = `font-bold ${typeColor}`; fields[0].textContent = (pos.isBotTrade ? '🤖 ' : '') + pos.type.toUpperCase(); fields[1].textContent = `$${pos.margin.toFixed(2)} (${pos.leverage}x)`; fields[2].textContent = pos.entryPrice.toFixed(2); fields[3].className = pnlColor; fields[3].textContent = pos.pnl.toFixed(2); }); }
