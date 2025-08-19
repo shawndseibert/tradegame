@@ -407,7 +407,7 @@
             let currentTimeframe = 5;
 
             // --- Chart.js Setup ---
-            function createChart(persistedAnnotations = {}) { if (tradingChart) tradingChart.destroy(); const config = { type: 'candlestick', data: { datasets: [{ label: 'Price', data: [] }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { type: 'time', time: { unit: 'minute', stepSize: currentTimeframe, displayFormats: { minute: 'HH:mm' } }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' }, offset: true }, y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } } }, plugins: { tooltip: { enabled: false }, legend: { display: false }, annotation: { annotations: persistedAnnotations }, zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: false, mode: 'x' }, onZoomStart: () => { isAutoScrolling = false; } } } } } }; tradingChart = new Chart(ctx, config); }
+            function createChart(persistedAnnotations = {}) { if (tradingChart) tradingChart.destroy(); const config = { type: 'candlestick', data: { datasets: [{ label: 'Price', data: [] }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { type: 'time', time: { unit: 'minute', stepSize: currentTimeframe, displayFormats: { minute: 'HH:mm' } }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' }, offset: true }, y: { position: 'right', grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } } }, plugins: { tooltip: { enabled: false }, legend: { display: false }, annotation: { annotations: persistedAnnotations }, zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: false, mode: 'x' }, onZoomStart: () => { isAutoScrolling = false; } } } } } }; tradingChart = new Chart(ctx, config); }
             
             // --- Indicator Calculation Functions (collapsed) ---
             function calculateEMA(data, period) { const k = 2 / (period + 1); let ema = [{ x: data[0].x, y: data[0].c }]; for (let i = 1; i < data.length; i++) { const newEma = (data[i].c * k) + (ema[i-1].y * (1 - k)); ema.push({ x: data[i].x, y: newEma }); } return ema; }
@@ -481,6 +481,29 @@
                             const signals = calculateSignals(aggregatedData);
                             signals.forEach(signal => { currentAnnotations[`signal-${signal.x}`] = { type: 'label', xValue: signal.x, yValue: signal.direction === 'buy' ? signal.price : signal.priceSell, content: signal.direction === 'buy' ? '🔼' : '🔽', color: signal.direction === 'buy' ? '#26A69A' : '#EF5350', font: { size: 16 }, yAdjust: signal.direction === 'buy' ? 10 : -10 }; });
                         }
+                        
+                        // --- Live Price Line Logic ---
+                        const lastCandle = displayData[displayData.length - 1];
+                        const isUpCandle = lastCandle.c >= lastCandle.o;
+                        const priceLineColor = isUpCandle ? '#26A69A' : '#EF5350';
+
+                        currentAnnotations.currentPriceLine = {
+                            type: 'line',
+                            yMin: lastPrice,
+                            yMax: lastPrice,
+                            borderColor: priceLineColor,
+                            borderWidth: 1.5,
+                            borderDash: [6, 6],
+                            label: {
+                                content: lastPrice.toFixed(2),
+                                enabled: true,
+                                position: 'end',
+                                backgroundColor: priceLineColor,
+                                font: { size: 12, weight: 'bold' },
+                                padding: { x: 6, y: 4 },
+                                borderRadius: 4,
+                            }
+                        };
                         
                         const totalPnl = account.equity - account.balance;
                         balanceEl.textContent = `$${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -581,7 +604,7 @@
             zoomOutBtn.addEventListener('click', () => { playSound('click'); isAutoScrolling = true; const newCount = Math.min(200, Math.ceil(visibleCandleCount * 1.2)); zoomAnimation = { start: performance.now(), duration: 300, from: visibleCandleCount, to: newCount }; });
             longButton.addEventListener('click', () => placeTrade('long'));
             shortButton.addEventListener('click', () => placeTrade('short'));
-            playAgainBtn.addEventListener('click', () => { playSound('click'); startNewNewGame(false); });
+            playAgainBtn.addEventListener('click', () => { playSound('click'); startNewGame(false); });
             newGameBtn.addEventListener('click', () => {
                 playSound('click');
                 showConfirmationModal(
