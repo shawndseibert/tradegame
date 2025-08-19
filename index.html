@@ -132,37 +132,19 @@
                 <span id="speed-value" class="font-semibold theme-text w-12 text-right">1x</span>
             </div>
             <div id="extra-settings" class="space-y-3">
-                <div class="grid grid-cols-1 gap-3">
-                    <select id="candle-type" class="w-full bg-gray-800 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="candlestick" selected>Candlestick</option>
-                        <option value="heikinashi">Heikin Ashi</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="candle-type-btn" class="settings-btn p-2 text-sm rounded-md">Candlestick</button>
+                    <button id="sounds-btn" class="settings-btn p-2 text-sm rounded-md">Sounds: ON</button>
                 </div>
                 <div class="border-t border-gray-700 my-2"></div>
                  <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-300">Theme Color</span>
                     <input type="color" id="theme-color-picker" value="#4F46E5">
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-300">Sounds 🔊</span>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" id="sounds-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
-                        <label for="sounds-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"><span class="toggle-ball absolute block w-6 h-6 rounded-full bg-white shadow inset-y-0 left-0"></span></label>
-                    </div>
-                </div>
-                 <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-300">Trade Signals</span>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" id="signals-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                        <label for="signals-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"><span class="toggle-ball absolute block w-6 h-6 rounded-full bg-white shadow inset-y-0 left-0"></span></label>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-300">Trading Bot 🤖</span>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" id="bot-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                        <label for="bot-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"><span class="toggle-ball absolute block w-6 h-6 rounded-full bg-white shadow inset-y-0 left-0"></span></label>
-                    </div>
+                <div class="border-t border-gray-700 my-2"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="new-game-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold text-sm py-2 px-3 rounded-lg transition-colors">New Game</button>
+                    <button id="restore-defaults-btn" class="bg-red-700 hover:bg-red-800 text-white font-bold text-sm py-2 px-3 rounded-lg transition-colors">Restore Defaults</button>
                 </div>
             </div>
         </div>
@@ -184,10 +166,15 @@
             
             <div id="place-trade-expanded">
                 <div class="space-y-4">
+                     <div class="grid grid-cols-2 gap-2">
+                        <button id="signals-btn" class="settings-btn p-2 text-sm rounded-md">Signals: OFF</button>
+                        <button id="bot-btn" class="settings-btn p-2 text-sm rounded-md">Bot: OFF</button>
+                    </div>
+                    <div class="border-t border-gray-600"></div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
                            <label for="trade-size-input" class="block text-sm font-medium text-gray-300">Trade Size</label>
-                           <input type="number" id="trade-size-input" value="100" class="w-28 bg-gray-800 border border-gray-600 rounded-md p-1 text-sm text-right focus:ring-indigo-500 focus:border-indigo-500">
+                           <input type="number" id="trade-size-input" value="1000" class="w-28 bg-gray-800 border border-gray-600 rounded-md p-1 text-sm text-right focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                          <div id="size-percentage-buttons" class="grid grid-cols-4 gap-2 mt-1">
                             <button data-percent="0.25" class="bg-gray-700 hover:bg-gray-600 text-xs py-1 rounded transition-colors">25%</button>
@@ -201,7 +188,7 @@
                             <label class="block text-sm font-medium text-gray-300">Leverage</label>
                             <span id="leverage-value" class="font-semibold theme-text text-sm">10x</span>
                         </div>
-                         <div id="leverage-buttons-expanded" class="grid grid-cols-5 gap-1 mt-1">
+                        <div id="leverage-buttons-expanded" class="grid grid-cols-5 gap-1 mt-1">
                             <button data-value="1" class="settings-btn p-1 text-xs rounded">1x</button>
                             <button data-value="10" class="settings-btn p-1 text-xs rounded">10x</button>
                             <button data-value="25" class="settings-btn p-1 text-xs rounded">25x</button>
@@ -260,7 +247,7 @@
             </div>
         </div>
 
-        <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-3">
+        <div id="account-panel" class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-3">
              <h2 id="account-title" class="collapsible-title text-xl font-bold mb-3 flex justify-between items-center transition-colors">
                 <span>Account</span>
                 <span id="account-toggle-icon">▲</span>
@@ -304,6 +291,17 @@
         </div>
     </div>
 
+    <div id="confirmation-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="card p-8 rounded-lg text-center max-w-sm">
+            <h2 id="confirmation-title" class="text-2xl font-bold theme-text mb-4">Confirmation</h2>
+            <p id="confirmation-message" class="text-gray-300 mb-6">Are you sure?</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="confirm-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Confirm</button>
+                <button id="cancel-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -331,9 +329,10 @@
             const sizeValueCollapsedEl = document.getElementById('size-value-collapsed');
             const tradeSizeDollarCollapsedEl = document.getElementById('trade-size-dollar-collapsed');
             const leverageValueCollapsedEl = document.getElementById('leverage-value-collapsed');
-            const soundsToggle = document.getElementById('sounds-toggle');
-            const signalsToggle = document.getElementById('signals-toggle');
-            const botToggle = document.getElementById('bot-toggle');
+            const soundsBtn = document.getElementById('sounds-btn');
+            const signalsBtn = document.getElementById('signals-btn');
+            const botBtn = document.getElementById('bot-btn');
+            const candleTypeBtn = document.getElementById('candle-type-btn');
             const balanceEl = document.getElementById('balance');
             const equityEl = document.getElementById('equity');
             const unrealizedPlEl = document.getElementById('unrealized-pl');
@@ -344,7 +343,6 @@
             const longButton = document.getElementById('long-button');
             const shortButton = document.getElementById('short-button');
             const positionsListEl = document.getElementById('positions-list');
-            const candleTypeSelect = document.getElementById('candle-type');
             const resetViewBtn = document.getElementById('reset-view-btn');
             const sizePercentageButtonsEl = document.getElementById('size-percentage-buttons');
             const titleBannerEl = document.getElementById('title-banner');
@@ -358,6 +356,13 @@
             const zoomOutBtn = document.getElementById('zoom-out-btn');
             const themeColorPicker = document.getElementById('theme-color-picker');
             const leverageButtonsExpandedEl = document.getElementById('leverage-buttons-expanded');
+            const newGameBtn = document.getElementById('new-game-btn');
+            const restoreDefaultsBtn = document.getElementById('restore-defaults-btn');
+            const confirmationModalEl = document.getElementById('confirmation-modal');
+            const confirmationTitleEl = document.getElementById('confirmation-title');
+            const confirmationMessageEl = document.getElementById('confirmation-message');
+            const confirmBtn = document.getElementById('confirm-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
 
             // --- Game State ---
             const STARTING_BALANCE = 10000;
@@ -373,8 +378,8 @@
             let showSignals = false;
             let isBotActive = false;
             let lastBotSignalTime = 0;
-            let takeProfitPercent = 5;
-            let stopLossPercent = 2;
+            let takeProfitPercent = 0;
+            let stopLossPercent = 0;
             let soundsEnabled = true;
             let settingsPanelExpanded = true;
             let accountPanelExpanded = true;
@@ -385,6 +390,7 @@
             let themeColor = '#4F46E5';
             let currentLeverage = 10;
             let currentTradeSizePercent = 10;
+            let candleType = 'candlestick';
 
             // --- Sound Effects (using Howler.js) ---
             const sounds = { click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }), open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }), win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }), lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }) };
@@ -401,7 +407,7 @@
             let currentTimeframe = 5;
 
             // --- Chart.js Setup ---
-            function createChart(persistedAnnotations = {}) { if (tradingChart) tradingChart.destroy(); const config = { type: 'candlestick', data: { datasets: [{ label: 'Price', data: [] }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { type: 'time', time: { unit: 'minute' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' }, offset: true }, y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } } }, plugins: { tooltip: { enabled: false }, legend: { display: false }, annotation: { annotations: persistedAnnotations }, zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: false, mode: 'x' }, onZoomStart: () => { isAutoScrolling = false; } } } } } }; tradingChart = new Chart(ctx, config); }
+            function createChart(persistedAnnotations = {}) { if (tradingChart) tradingChart.destroy(); const config = { type: 'candlestick', data: { datasets: [{ label: 'Price', data: [] }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { type: 'time', time: { unit: 'minute', stepSize: currentTimeframe, displayFormats: { minute: 'HH:mm' } }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' }, offset: true }, y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } } }, plugins: { tooltip: { enabled: false }, legend: { display: false }, annotation: { annotations: persistedAnnotations }, zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: false, mode: 'x' }, onZoomStart: () => { isAutoScrolling = false; } } } } } }; tradingChart = new Chart(ctx, config); }
             
             // --- Indicator Calculation Functions (collapsed) ---
             function calculateEMA(data, period) { const k = 2 / (period + 1); let ema = [{ x: data[0].x, y: data[0].c }]; for (let i = 1; i < data.length; i++) { const newEma = (data[i].c * k) + (ema[i-1].y * (1 - k)); ema.push({ x: data[i].x, y: newEma }); } return ema; }
@@ -445,7 +451,7 @@
 
                 if (masterOneMinuteData.length > 0) {
                     const aggregatedData = aggregateData(masterOneMinuteData, currentTimeframe);
-                    let displayData = (candleTypeSelect.value === 'heikinashi') ? toHeikinAshi(aggregatedData) : aggregatedData;
+                    let displayData = (candleType === 'heikinashi') ? toHeikinAshi(aggregatedData) : aggregatedData;
                     if (displayData.length > 0) {
                         tradingChart.data.datasets[0].data = displayData;
                         const lastCandleTime = displayData[displayData.length - 1].x;
@@ -472,7 +478,7 @@
                         const currentAnnotations = tradingChart.options.plugins.annotation.annotations;
                         Object.keys(currentAnnotations).forEach(key => { if (key.startsWith('signal-')) delete currentAnnotations[key]; });
                         if (showSignals) {
-                            const signals = calculateSignals(displayData);
+                            const signals = calculateSignals(aggregatedData);
                             signals.forEach(signal => { currentAnnotations[`signal-${signal.x}`] = { type: 'label', xValue: signal.x, yValue: signal.direction === 'buy' ? signal.price : signal.priceSell, content: signal.direction === 'buy' ? '🔼' : '🔽', color: signal.direction === 'buy' ? '#26A69A' : '#EF5350', font: { size: 16 }, yAdjust: signal.direction === 'buy' ? 10 : -10 }; });
                         }
                         
@@ -502,9 +508,20 @@
             
             // --- Game Flow, Save/Load Functions ---
             function triggerGameOver() { if(gameLoopInterval) clearInterval(gameLoopInterval); playSound('lose'); updatePlayerTitle(); finalTitleEl.textContent = playerStats.playerTitle; peakEquityEl.textContent = `$${playerStats.highestEquity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; totalTradesEl.textContent = playerStats.totalTrades; gameOverModalEl.classList.remove('hidden'); }
-            function resetGame() { localStorage.removeItem('tradingGameSave'); account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE }; playerStats = { highestEquity: STARTING_BALANCE, totalTrades: 0, playerTitle: '' }; openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0; document.getElementById('positions-list').innerHTML = '<p id="no-positions-msg" class="text-gray-400">No open positions.</p>'; regenerateMasterData(); createChart(); updateUiFromState(); gameOverModalEl.classList.add('hidden'); setGameSpeed(gameSpeed); }
+            function startNewGame(clearSave = false) {
+                if (clearSave) { localStorage.removeItem('tradingGameSave'); }
+                account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE };
+                playerStats = { highestEquity: STARTING_BALANCE, totalTrades: 0, playerTitle: '' };
+                openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0;
+                document.getElementById('positions-list').innerHTML = '<p id="no-positions-msg" class="text-gray-400">No open positions.</p>';
+                regenerateMasterData(); createChart(); updateUiFromState();
+                gameOverModalEl.classList.add('hidden'); setGameSpeed(gameSpeed);
+            }
+            function restoreDefaultSettings() {
+                currentTimeframe = 5; gameSpeed = 1; soundsEnabled = true; showSignals = false; isBotActive = false; takeProfitPercent = 0; stopLossPercent = 0; settingsPanelExpanded = false; accountPanelExpanded = false; placeTradePanelExpanded = false; themeColor = '#4F46E5'; currentLeverage = 10; currentTradeSizePercent = 10; candleType = 'candlestick';
+            }
             function saveGame() { 
-                const settings = { timeframe: currentTimeframe, candleType: candleTypeSelect.value, gameSpeed: gameSpeed, soundsEnabled: soundsEnabled, signalsEnabled: showSignals, botEnabled: isBotActive, tpPercent: takeProfitPercent, slPercent: stopLossPercent, settingsPanelExpanded: settingsPanelExpanded, accountPanelExpanded: accountPanelExpanded, placeTradePanelExpanded: placeTradePanelExpanded, tradeSizePercent: currentTradeSizePercent, leverage: currentLeverage, themeColor: themeColor };
+                const settings = { timeframe: currentTimeframe, candleType: candleType, gameSpeed: gameSpeed, soundsEnabled: soundsEnabled, signalsEnabled: showSignals, botEnabled: isBotActive, tpPercent: takeProfitPercent, slPercent: stopLossPercent, settingsPanelExpanded: settingsPanelExpanded, accountPanelExpanded: accountPanelExpanded, placeTradePanelExpanded: placeTradePanelExpanded, tradeSizePercent: currentTradeSizePercent, leverage: currentLeverage, themeColor: themeColor };
                 const gameState = { account, playerStats, openPositions, masterOneMinuteData, lastPrice, lastTime, lastClosedPl, settings };
                 localStorage.setItem('tradingGameSave', JSON.stringify(gameState)); 
             }
@@ -516,17 +533,37 @@
                     account = savedState.account; playerStats = savedState.playerStats; openPositions = savedState.openPositions; masterOneMinuteData = savedState.masterOneMinuteData; lastPrice = savedState.lastPrice; lastTime = savedState.lastTime; lastClosedPl = savedState.lastClosedPl || 0;
                     if (savedState.settings) {
                         const settings = savedState.settings;
-                        currentTimeframe = parseInt(settings.timeframe, 10) || 5; gameSpeed = parseInt(settings.gameSpeed, 10) || 1; soundsEnabled = settings.soundsEnabled !== false; showSignals = settings.signalsEnabled === true; isBotActive = settings.botEnabled === true; takeProfitPercent = parseFloat(settings.tpPercent) || 5; stopLossPercent = parseFloat(settings.slPercent) || 2; settingsPanelExpanded = settings.settingsPanelExpanded !== false; accountPanelExpanded = settings.accountPanelExpanded !== false; placeTradePanelExpanded = settings.placeTradePanelExpanded !== false;
+                        currentTimeframe = parseInt(settings.timeframe, 10) || 5; gameSpeed = parseInt(settings.gameSpeed, 10) || 1; soundsEnabled = settings.soundsEnabled !== false; showSignals = settings.signalsEnabled === true; isBotActive = settings.botEnabled === true; 
+                        takeProfitPercent = settings.tpPercent !== undefined ? parseFloat(settings.tpPercent) : 0; 
+                        stopLossPercent = settings.slPercent !== undefined ? parseFloat(settings.slPercent) : 0;
+                        settingsPanelExpanded = settings.settingsPanelExpanded !== false; accountPanelExpanded = settings.accountPanelExpanded !== false; placeTradePanelExpanded = settings.placeTradePanelExpanded !== false;
                         currentTradeSizePercent = settings.tradeSizePercent || 10;
                         currentLeverage = settings.leverage || 10;
                         themeColor = settings.themeColor || '#4F46E5';
+                        candleType = settings.candleType || 'candlestick';
                     }
                     showMessage("Game progress loaded!", "info"); return true;
                 } catch (e) { console.error("Failed to load saved game state:", e); localStorage.removeItem('tradingGameSave'); return false; }
             }
             
             // --- Initial Setup ---
-            function init() { const gameLoaded = loadGame(); updateUiFromState(); if (!gameLoaded) regenerateMasterData(); const initialAnnotations = {}; openPositions.forEach(pos => { initialAnnotations[pos.id] = createAnnotationForPosition(pos); }); createChart(initialAnnotations); setGameSpeed(gameSpeed); requestAnimationFrame(renderLoop); }
+            function init() { 
+                const gameLoaded = loadGame(); 
+                if (!gameLoaded) { // First time playing
+                    settingsPanelExpanded = false;
+                    accountPanelExpanded = false;
+                    placeTradePanelExpanded = false;
+                }
+                updateUiFromState(); 
+                if (!gameLoaded) {
+                    regenerateMasterData();
+                }
+                const initialAnnotations = {}; 
+                openPositions.forEach(pos => { initialAnnotations[pos.id] = createAnnotationForPosition(pos); }); 
+                createChart(initialAnnotations); 
+                setGameSpeed(gameSpeed); 
+                requestAnimationFrame(renderLoop); 
+            }
 
             // --- Event Listeners ---
             accountTitleEl.addEventListener('click', () => { playSound('click'); accountPanelExpanded = !accountPanelExpanded; updateUiFromState(); });
@@ -535,16 +572,32 @@
             timeframeButtonsEl.addEventListener('click', (e) => { const button = e.target.closest('.settings-btn'); if (button) { playSound('click'); currentTimeframe = parseInt(button.dataset.value, 10); visibleCandleCount = DEFAULT_VISIBLE_CANDLES; isAutoScrolling = true; updateUiFromState(); } });
             tpButtonsEl.addEventListener('click', (e) => { const button = e.target.closest('.settings-btn'); if (button) { playSound('click'); takeProfitPercent = parseFloat(button.dataset.value); updateUiFromState(); } });
             slButtonsEl.addEventListener('click', (e) => { const button = e.target.closest('.settings-btn'); if (button) { playSound('click'); stopLossPercent = parseFloat(button.dataset.value); updateUiFromState(); } });
-            soundsToggle.addEventListener('change', () => { soundsEnabled = soundsToggle.checked; playSound('click'); });
-            signalsToggle.addEventListener('change', () => { showSignals = signalsToggle.checked; });
-            botToggle.addEventListener('change', () => { isBotActive = botToggle.checked; showMessage(isBotActive ? "Trading Bot Activated! 🤖" : "Trading Bot Deactivated.", "info"); });
+            soundsBtn.addEventListener('click', () => { soundsEnabled = !soundsEnabled; playSound('click'); updateUiFromState(); });
+            signalsBtn.addEventListener('click', () => { playSound('click'); showSignals = !showSignals; updateUiFromState(); });
+            botBtn.addEventListener('click', () => { playSound('click'); isBotActive = !isBotActive; showMessage(isBotActive ? "Trading Bot Activated! 🤖" : "Trading Bot Deactivated.", "info"); updateUiFromState(); });
+            candleTypeBtn.addEventListener('click', () => { playSound('click'); candleType = candleType === 'candlestick' ? 'heikinashi' : 'candlestick'; updateUiFromState(); });
             resetViewBtn.addEventListener('click', () => { playSound('click'); tradingChart.resetZoom('none'); visibleCandleCount = DEFAULT_VISIBLE_CANDLES; isAutoScrolling = true; });
             zoomInBtn.addEventListener('click', () => { playSound('click'); isAutoScrolling = true; const newCount = Math.max(10, Math.floor(visibleCandleCount * 0.8)); zoomAnimation = { start: performance.now(), duration: 300, from: visibleCandleCount, to: newCount }; });
             zoomOutBtn.addEventListener('click', () => { playSound('click'); isAutoScrolling = true; const newCount = Math.min(200, Math.ceil(visibleCandleCount * 1.2)); zoomAnimation = { start: performance.now(), duration: 300, from: visibleCandleCount, to: newCount }; });
             longButton.addEventListener('click', () => placeTrade('long'));
             shortButton.addEventListener('click', () => placeTrade('short'));
-            candleTypeSelect.addEventListener('change', () => uiNeedsUpdate = true);
-            playAgainBtn.addEventListener('click', () => { playSound('click'); resetGame(); });
+            playAgainBtn.addEventListener('click', () => { playSound('click'); startNewNewGame(false); });
+            newGameBtn.addEventListener('click', () => {
+                playSound('click');
+                showConfirmationModal(
+                    'New Game',
+                    'Are you sure you want to start a new game? Your current game progress will be reset, but your saved game will remain.',
+                    () => { startNewGame(false); }
+                );
+            });
+            restoreDefaultsBtn.addEventListener('click', () => {
+                playSound('click');
+                showConfirmationModal(
+                    'Restore Defaults',
+                    'Are you sure you want to restore all settings to default? This will clear your saved game and cannot be undone.',
+                    () => { restoreDefaultSettings(); startNewGame(true); }
+                );
+            });
             themeColorPicker.addEventListener('input', (e) => { themeColor = e.target.value; updateUiFromState(); });
             window.addEventListener('beforeunload', saveGame);
             
@@ -585,23 +638,12 @@
                     updateUiFromState();
                 }
             });
-
-            function handleLeverageInput(e) {
-                currentLeverage = parseInt(e.target.value, 10);
-                updateUiFromState();
-            }
-            leverageSliderCollapsed.addEventListener('input', handleLeverageInput);
-            function handleSizeInput(e){
-                currentTradeSizePercent = parseInt(e.target.value, 10);
-                updateUiFromState();
-            }
-            sizeSliderCollapsed.addEventListener('input', handleSizeInput);
+            leverageSliderCollapsed.addEventListener('input', e => { currentLeverage = parseInt(e.target.value); updateUiFromState(); });
+            sizeSliderCollapsed.addEventListener('input', e => { currentTradeSizePercent = parseInt(e.target.value); updateUiFromState(); });
             tradeSizeInput.addEventListener('input', () => {
                 const percent = (parseFloat(tradeSizeInput.value) / account.balance) * 100;
-                if (percent >= 1 && percent <= 100) {
-                    currentTradeSizePercent = Math.round(percent);
-                    updateUiFromState();
-                }
+                if (percent >= 1 && percent <= 100) { currentTradeSizePercent = Math.round(percent); } else if (percent < 1) { currentTradeSizePercent = 1; } else { currentTradeSizePercent = 100; }
+                updateUiFromState();
             });
             speedSliderEl.addEventListener('input', (e) => { gameSpeed = parseInt(e.target.value, 10); speedValueEl.textContent = `${gameSpeed}x`; setGameSpeed(gameSpeed); });
 
@@ -625,8 +667,14 @@
                 updateActiveButton(slButtonsEl, stopLossPercent, 'active-setting-btn');
                 updateActiveButton(leverageButtonsExpandedEl, currentLeverage, 'active-setting-btn');
                 
-                candleTypeSelect.value = candleTypeSelect.value || 'candlestick';
-                soundsToggle.checked = soundsEnabled; signalsToggle.checked = showSignals; botToggle.checked = isBotActive; 
+                soundsBtn.textContent = soundsEnabled ? 'Sounds: ON' : 'Sounds: OFF';
+                soundsBtn.classList.toggle('active-setting-btn', soundsEnabled);
+                signalsBtn.textContent = showSignals ? 'Signals: ON' : 'Signals: OFF';
+                signalsBtn.classList.toggle('active-setting-btn', showSignals);
+                botBtn.textContent = isBotActive ? 'Bot: ON' : 'Bot: OFF';
+                botBtn.classList.toggle('active-setting-btn', isBotActive);
+                candleTypeBtn.textContent = candleType === 'candlestick' ? 'Candlestick' : 'Heikin Ashi';
+
                 extraSettingsEl.classList.toggle('hidden', !settingsPanelExpanded); settingsToggleIconEl.textContent = settingsPanelExpanded ? '▲' : '▼';
                 accountDetailsExpandedEl.classList.toggle('hidden', !accountPanelExpanded); accountDetailsCollapsedEl.classList.toggle('hidden', accountPanelExpanded); accountToggleIconEl.textContent = accountPanelExpanded ? '▲' : '▼';
                 placeTradeExpandedEl.classList.toggle('hidden', !placeTradePanelExpanded); placeTradeCollapsedEl.classList.toggle('hidden', placeTradePanelExpanded); placeTradeToggleIconEl.textContent = placeTradePanelExpanded ? '▲' : '▼';
@@ -656,6 +704,38 @@
             function updatePositionsList() { const noMsg = document.getElementById('no-positions-msg'); if(noMsg) noMsg.style.display = openPositions.length === 0 ? 'block' : 'none'; openPositions.forEach(pos => { let posEl = document.getElementById(pos.id); if (!posEl) { posEl = document.createElement('div'); posEl.id = pos.id; posEl.innerHTML = `<span class="font-bold"></span><span></span><span></span><span></span><button class="close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded">Close</button>`; positionsListEl.appendChild(posEl); posEl.querySelector('.close-pos-btn').addEventListener('click', () => { playSound('click'); closePosition(pos.id); }); } const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'; const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30'; const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400'; posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`; const fields = posEl.children; fields[0].className = `font-bold ${typeColor}`; fields[0].textContent = (pos.isBotTrade ? '🤖 ' : '') + pos.type.toUpperCase(); fields[1].textContent = `$${pos.margin.toFixed(2)} (${pos.leverage}x)`; fields[2].textContent = pos.entryPrice.toFixed(2); fields[3].className = pnlColor; fields[3].textContent = pos.pnl.toFixed(2); }); }
             function setGameSpeed(speed) { if (gameLoopInterval) clearInterval(gameLoopInterval); const intervalTime = Math.max(1, 1000 / speed); gameLoopInterval = setInterval(gameLoop, intervalTime); }
             let messageTimeout; function showMessage(text, type = "info", duration = 3000) { const messageBox = document.getElementById('message-box'); const messageText = document.getElementById('message-text'); if (messageTimeout) clearTimeout(messageTimeout); messageBox.style.backgroundColor = type === 'error' ? '#dc2626' : 'var(--theme-color)'; messageText.textContent = text; messageBox.classList.remove('opacity-0', 'pointer-events-none'); messageTimeout = setTimeout(() => { messageBox.classList.add('opacity-0'); setTimeout(() => messageBox.classList.add('pointer-events-none'), 300); }, duration); }
+
+            function showConfirmationModal(title, message, onConfirm) {
+                confirmationTitleEl.textContent = title;
+                confirmationMessageEl.textContent = message;
+                
+                const confirmButtonColor = title === 'Restore Defaults' ? 'bg-red-700' : 'bg-indigo-600';
+                const confirmButtonHoverColor = title === 'Restore Defaults' ? 'hover:bg-red-800' : 'hover:bg-indigo-700';
+
+                confirmBtn.className = `w-full ${confirmButtonColor} ${confirmButtonHoverColor} text-white font-bold py-2 px-4 rounded-lg transition-colors`;
+                
+                confirmationModalEl.classList.remove('hidden');
+
+                const confirmHandler = () => {
+                    playSound('click');
+                    onConfirm();
+                    hideConfirmationModal();
+                };
+
+                const cancelHandler = () => {
+                    playSound('click');
+                    hideConfirmationModal();
+                };
+
+                const hideConfirmationModal = () => {
+                    confirmationModalEl.classList.add('hidden');
+                    confirmBtn.removeEventListener('click', confirmHandler);
+                    cancelBtn.removeEventListener('click', cancelHandler);
+                };
+
+                confirmBtn.addEventListener('click', confirmHandler);
+                cancelBtn.addEventListener('click', cancelHandler);
+            }
 
             init();
         });
