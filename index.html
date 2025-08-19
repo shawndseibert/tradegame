@@ -69,6 +69,11 @@
         .settings-btn:hover {
             background-color: #4B5563;
         }
+        .settings-btn:disabled {
+            background-color: #2b323d;
+            color: #6b7280;
+            cursor: not-allowed;
+        }
         .settings-btn.active-setting-btn {
             background-color: var(--theme-color); color: white; border-color: var(--theme-color); font-weight: 700;
         }
@@ -241,6 +246,11 @@
                 </div>
             </div>
             
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button id="pump-btn" class="settings-btn p-2 text-sm rounded-md bg-green-800/50 border-green-700 hover:bg-green-700/50">Pump Market</button>
+                <button id="dump-btn" class="settings-btn p-2 text-sm rounded-md bg-red-800/50 border-red-700 hover:bg-red-700/50">Dump Market</button>
+            </div>
+            
             <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-700 mt-4">
                 <button id="long-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Long</button>
                 <button id="short-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Short</button>
@@ -298,6 +308,31 @@
             <div class="grid grid-cols-2 gap-4">
                 <button id="confirm-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Confirm</button>
                 <button id="cancel-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="dev-menu-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="card p-6 rounded-lg text-left max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold theme-text">Dev Menu</h2>
+                <button id="close-dev-menu-btn" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-sm text-gray-400">Press 'dev' to open/close. Use these tools for debugging.</p>
+                <div class="border-t border-gray-700"></div>
+                <h3 class="font-semibold">Balance Control</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="dev-add-10k" class="settings-btn p-2 text-sm rounded-md">+10k</button>
+                    <button id="dev-add-100k" class="settings-btn p-2 text-sm rounded-md">+100k</button>
+                    <button id="dev-reset-balance" class="settings-btn p-2 text-sm rounded-md">Reset</button>
+                </div>
+                 <div class="border-t border-gray-700"></div>
+                <h3 class="font-semibold">Market Control</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="dev-force-pump" class="settings-btn p-2 text-sm rounded-md">Force Pump (15s)</button>
+                    <button id="dev-force-dump" class="settings-btn p-2 text-sm rounded-md">Force Dump (15s)</button>
+                </div>
             </div>
         </div>
     </div>
@@ -363,6 +398,10 @@
             const confirmationMessageEl = document.getElementById('confirmation-message');
             const confirmBtn = document.getElementById('confirm-btn');
             const cancelBtn = document.getElementById('cancel-btn');
+            const pumpBtn = document.getElementById('pump-btn');
+            const dumpBtn = document.getElementById('dump-btn');
+            const devMenuModalEl = document.getElementById('dev-menu-modal');
+            const closeDevMenuBtn = document.getElementById('close-dev-menu-btn');
 
             // --- Game State ---
             const STARTING_BALANCE = 10000;
@@ -391,13 +430,29 @@
             let currentLeverage = 10;
             let currentTradeSizePercent = 10;
             let candleType = 'candlestick';
+            let marketManipulation = null; // { type: 'pump' | 'dump', duration: number }
+            let pumpDumpCooldown = 0;
 
             // --- Sound Effects (using Howler.js) ---
-            const sounds = { click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }), open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }), win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }), lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }) };
+            const sounds = { click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }), open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }), win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }), lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }), error: new Howl({ src: ['https://cdn.pixabay.com/audio/2021/08/04/audio_542a0a32d4.mp3'] }) };
             function playSound(soundName) { if (soundsEnabled && sounds[soundName]) { sounds[soundName].play(); } }
             
             // --- Title Tiers ---
-            const titles = [ { balance: 1000000, name: 'Legendary Leviathan 🐋', className: 'banner-legendary' }, { balance: 500000,  name: 'Galactic Overlord 🚀',   className: 'banner-overlord' }, { balance: 250000,  name: 'Wall Street Wolf 🐺',   className: 'banner-wolf' }, { balance: 100000,  name: 'Market Maven 🧠',      className: 'banner-maven' }, { balance: 50000,   name: 'Seasoned Speculator 🧐',className: 'banner-seasoned' }, { balance: 25000,   name: 'Pro Piker 📈',        className: 'banner-pro' }, { balance: 15000,   name: 'Aspiring Analyst 🤓',  className: 'banner-aspiring' }, { balance: 10000,   name: 'Novice Trader 🌱',     className: 'banner-novice' }, { balance: 7500,    name: 'Aspiring Bagholder 🛍️', className: 'banner-bagholder' }, { balance: 5000,    name: 'Expert Liquidator 📉',  className: 'banner-liquidator' }, { balance: 0,       name: 'Ramen Connoisseur 🍜',  className: 'banner-ramen' }];
+            const titles = [
+                { balance: 1e12,    name: 'Interstellar Mogul 🪐',  className: 'banner-legendary' },
+                { balance: 1e9,     name: 'Financial Deity 👑',     className: 'banner-legendary' },
+                { balance: 1000000, name: 'Legendary Leviathan 🐋', className: 'banner-legendary' },
+                { balance: 500000,  name: 'Galactic Overlord 🚀',   className: 'banner-overlord' },
+                { balance: 250000,  name: 'Wall Street Wolf 🐺',   className: 'banner-wolf' },
+                { balance: 100000,  name: 'Market Maven 🧠',      className: 'banner-maven' },
+                { balance: 50000,   name: 'Seasoned Speculator 🧐',className: 'banner-seasoned' },
+                { balance: 25000,   name: 'Pro Piker 📈',        className: 'banner-pro' },
+                { balance: 15000,   name: 'Aspiring Analyst 🤓',  className: 'banner-aspiring' },
+                { balance: 10000,   name: 'Novice Trader 🌱',     className: 'banner-novice' },
+                { balance: 7500,    name: 'Aspiring Bagholder 🛍️', className: 'banner-bagholder' },
+                { balance: 5000,    name: 'Expert Liquidator 📉',  className: 'banner-liquidator' },
+                { balance: 0,       name: 'Ramen Connoisseur 🍜',  className: 'banner-ramen' }
+            ];
 
             // --- Chart.js State ---
             const ctx = document.getElementById('trading-chart').getContext('2d');
@@ -421,6 +476,9 @@
             function gameLoop() {
                 masterOneMinuteData.push(generateOneMinuteCandle());
                 if (masterOneMinuteData.length > MAX_DATA_POINTS) masterOneMinuteData.shift();
+                
+                if (pumpDumpCooldown > 0) pumpDumpCooldown--;
+
                 botDecisionLoop();
                 let totalPnl = 0;
                 const positionsToClose = [];
@@ -522,6 +580,7 @@
                         tradeSizeDollarCollapsedEl.textContent = formatCurrencyAbbreviated(sizeInDollars);
                         leverageValueCollapsedEl.textContent = `(${currentLeverage}x)`;
                         
+                        updatePumpDumpButtons();
                         tradingChart.update('none');
                         updatePositionsList();
                     }
@@ -535,7 +594,7 @@
                 if (clearSave) { localStorage.removeItem('tradingGameSave'); }
                 account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE };
                 playerStats = { highestEquity: STARTING_BALANCE, totalTrades: 0, playerTitle: '' };
-                openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0;
+                openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0; marketManipulation = null; pumpDumpCooldown = 0;
                 document.getElementById('positions-list').innerHTML = '<p id="no-positions-msg" class="text-gray-400">No open positions.</p>';
                 regenerateMasterData(); createChart(); updateUiFromState();
                 gameOverModalEl.classList.add('hidden'); setGameSpeed(gameSpeed);
@@ -605,6 +664,8 @@
             longButton.addEventListener('click', () => placeTrade('long'));
             shortButton.addEventListener('click', () => placeTrade('short'));
             playAgainBtn.addEventListener('click', () => { playSound('click'); startNewGame(false); });
+            pumpBtn.addEventListener('click', () => initiateMarketManipulation('pump'));
+            dumpBtn.addEventListener('click', () => initiateMarketManipulation('dump'));
             newGameBtn.addEventListener('click', () => {
                 playSound('click');
                 showConfirmationModal(
@@ -670,6 +731,66 @@
             });
             speedSliderEl.addEventListener('input', (e) => { gameSpeed = parseInt(e.target.value, 10); speedValueEl.textContent = `${gameSpeed}x`; setGameSpeed(gameSpeed); });
 
+            // --- Market Manipulation ---
+            function initiateMarketManipulation(type) {
+                playSound('click');
+                const cost = account.balance * 0.15;
+                const costFormatted = `$${cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                const title = type === 'pump' ? 'Pump Market' : 'Dump Market';
+                const message = `This will cost ${costFormatted} (15% of balance). There's a 20% chance of failure, resulting in an additional 10% fine. Proceed?`;
+
+                showConfirmationModal(title, message, () => {
+                    account.balance -= cost;
+                    pumpDumpCooldown = 120; // 2 minutes in 1x speed
+                    
+                    const failureChance = 0.20; // 20%
+                    if (Math.random() < failureChance) {
+                        const fine = account.balance * 0.10;
+                        account.balance -= fine;
+                        playSound('error');
+                        showMessage(`SEC Investigation! You were fined $${fine.toFixed(2)}.`, 'error');
+                    } else {
+                        marketManipulation = { type: type, duration: 30 }; // 30 candles
+                        showMessage(`Market manipulation initiated!`, 'info');
+                    }
+                });
+            }
+            
+            function updatePumpDumpButtons() {
+                const disabled = pumpDumpCooldown > 0;
+                pumpBtn.disabled = disabled;
+                dumpBtn.disabled = disabled;
+                if (disabled) {
+                    const minutes = Math.floor(pumpDumpCooldown / 60);
+                    const seconds = (pumpDumpCooldown % 60).toString().padStart(2, '0');
+                    pumpBtn.textContent = `Cooldown ${minutes}:${seconds}`;
+                    dumpBtn.textContent = `Cooldown ${minutes}:${seconds}`;
+                } else {
+                    pumpBtn.textContent = 'Pump Market';
+                    dumpBtn.textContent = 'Dump Market';
+                }
+            }
+
+            // --- Dev Menu ---
+            let devCodeBuffer = '';
+            document.addEventListener('keydown', (e) => {
+                devCodeBuffer += e.key;
+                if (devCodeBuffer.endsWith('dev')) {
+                    devMenuModalEl.classList.toggle('hidden');
+                    devCodeBuffer = ''; 
+                }
+                if (devCodeBuffer.length > 10) {
+                    devCodeBuffer = devCodeBuffer.slice(-10);
+                }
+            });
+            closeDevMenuBtn.addEventListener('click', () => devMenuModalEl.classList.add('hidden'));
+            document.getElementById('dev-add-10k').addEventListener('click', () => { account.balance += 10000; });
+            document.getElementById('dev-add-100k').addEventListener('click', () => { account.balance += 100000; });
+            document.getElementById('dev-reset-balance').addEventListener('click', () => { account.balance = STARTING_BALANCE; });
+            document.getElementById('dev-force-pump').addEventListener('click', () => { marketManipulation = { type: 'pump', duration: 15 }; });
+            document.getElementById('dev-force-dump').addEventListener('click', () => { marketManipulation = { type: 'dump', duration: 15 }; });
+
+
             // --- Utility Functions ---
             function updateActiveButton(containerEl, value, activeClass) { containerEl.querySelectorAll('.settings-btn').forEach(btn => { btn.classList.toggle(activeClass, btn.dataset.value == value); }); }
             function lightenColor(hex, percent) {
@@ -700,7 +821,19 @@
 
                 extraSettingsEl.classList.toggle('hidden', !settingsPanelExpanded); settingsToggleIconEl.textContent = settingsPanelExpanded ? '▲' : '▼';
                 accountDetailsExpandedEl.classList.toggle('hidden', !accountPanelExpanded); accountDetailsCollapsedEl.classList.toggle('hidden', accountPanelExpanded); accountToggleIconEl.textContent = accountPanelExpanded ? '▲' : '▼';
-                placeTradeExpandedEl.classList.toggle('hidden', !placeTradePanelExpanded); placeTradeCollapsedEl.classList.toggle('hidden', placeTradePanelExpanded); placeTradeToggleIconEl.textContent = placeTradePanelExpanded ? '▲' : '▼';
+                
+                placeTradeExpandedEl.classList.toggle('hidden', !placeTradePanelExpanded);
+                placeTradeCollapsedEl.classList.toggle('hidden', placeTradePanelExpanded);
+                placeTradeToggleIconEl.textContent = placeTradePanelExpanded ? '▲' : '▼';
+                
+                // Adjust pump/dump button height based on panel state
+                if (placeTradePanelExpanded) {
+                    pumpBtn.classList.replace('py-1', 'p-2');
+                    dumpBtn.classList.replace('py-1', 'p-2');
+                } else {
+                    pumpBtn.classList.replace('p-2', 'py-1');
+                    dumpBtn.classList.replace('p-2', 'py-1');
+                }
                 
                 speedSliderEl.value = gameSpeed;
                 speedValueEl.textContent = `${gameSpeed}x`;
@@ -714,10 +847,42 @@
                 
                 updatePlayerTitle();
             }
-            function formatCurrencyAbbreviated(value) { const sign = value < 0 ? '-' : ''; const absValue = Math.abs(value); if (absValue >= 1e6) return `${sign}$${(absValue / 1e6).toFixed(2)}M`; if (absValue >= 1e3) return `${sign}$${(absValue / 1e3).toFixed(1)}k`; return `${sign}$${absValue.toFixed(2)}`; }
+            function formatCurrencyAbbreviated(value) {
+                const sign = value < 0 ? '-' : '';
+                const absValue = Math.abs(value);
+                if (absValue >= 1e12) return `${sign}$${(absValue / 1e12).toFixed(2)}T`;
+                if (absValue >= 1e9) return `${sign}$${(absValue / 1e9).toFixed(2)}B`;
+                if (absValue >= 1e6) return `${sign}$${(absValue / 1e6).toFixed(2)}M`;
+                if (absValue >= 1e3) return `${sign}$${(absValue / 1e3).toFixed(1)}k`;
+                return `${sign}$${absValue.toFixed(2)}`;
+            }
             function createAnnotationForPosition(pos) { return { type: 'line', yMin: pos.entryPrice, yMax: pos.entryPrice, borderColor: pos.type === 'long' ? '#26A69A' : '#EF5350', borderWidth: 2, borderDash: [6, 6], label: { content: `${pos.isBotTrade ? '🤖 ' : ''}${pos.type.toUpperCase()} @ ${pos.entryPrice.toFixed(2)}`, enabled: true, position: 'end', backgroundColor: 'rgba(0,0,0,0.6)' } }; }
             function updatePlayerTitle() { let newTitleData = titles[titles.length - 1]; for (const title of titles) { if (account.balance >= title.balance) { newTitleData = title; break; } } if (newTitleData.name !== playerStats.playerTitle) { playerStats.playerTitle = newTitleData.name; playerTitleEl.textContent = newTitleData.name; const bannerClasses = titles.map(t => t.className); titleBannerEl.classList.remove(...bannerClasses); titleBannerEl.classList.add(newTitleData.className); titleBannerEl.classList.remove('flash-animation'); void titleBannerEl.offsetWidth; titleBannerEl.classList.add('flash-animation'); } }
-            function generateOneMinuteCandle() { const changePercent = (Math.random() - 0.5) * 0.005; const change = lastPrice * changePercent; const open = lastPrice; const close = open + change; const high = Math.max(open, close) + (Math.random() * Math.abs(change) * 2); const low = Math.min(open, close) - (Math.random() * Math.abs(change) * 2); lastPrice = close; lastTime += 60000; return { x: lastTime, o: open, h: high, l: low, c: close }; }
+            function generateOneMinuteCandle() {
+                let changePercent = (Math.random() - 0.5) * 0.005; // Default random movement
+
+                if (marketManipulation) {
+                    if (marketManipulation.type === 'pump') {
+                        changePercent = (Math.random() * 0.005) + 0.003; // Strong upward bias
+                    } else { // 'dump'
+                        changePercent = -(Math.random() * 0.005) - 0.003; // Strong downward bias
+                    }
+                    marketManipulation.duration--;
+                    if (marketManipulation.duration <= 0) {
+                        marketManipulation = null;
+                        showMessage('Market forces have stabilized.', 'info');
+                    }
+                }
+
+                const change = lastPrice * changePercent; 
+                const open = lastPrice; 
+                const close = open + change; 
+                const high = Math.max(open, close) + (Math.random() * Math.abs(change) * 2); 
+                const low = Math.min(open, close) - (Math.random() * Math.abs(change) * 2); 
+                lastPrice = close; 
+                lastTime += 60000; 
+                return { x: lastTime, o: open, h: high, l: low, c: close }; 
+            }
             function regenerateMasterData() { masterOneMinuteData = []; lastPrice = 50000; const historyMinutes = 5000; lastTime = new Date().getTime() - (historyMinutes * 60000); for (let i = 0; i < historyMinutes; i++) masterOneMinuteData.push(generateOneMinuteCandle()); }
             function aggregateData(data, timeframeMinutes) { if (timeframeMinutes <= 1) return data; const aggregated = []; let currentCandle = null; for (const candle of data) { const candleTime = new Date(candle.x); const intervalStart = new Date(candleTime); intervalStart.setMinutes(Math.floor(candleTime.getMinutes() / timeframeMinutes) * timeframeMinutes, 0, 0); if (!currentCandle || currentCandle.x !== intervalStart.getTime()) { if (currentCandle) aggregated.push(currentCandle); currentCandle = { x: intervalStart.getTime(), o: candle.o, h: candle.h, l: candle.l, c: candle.c }; } else { currentCandle.h = Math.max(currentCandle.h, candle.h); currentCandle.l = Math.min(currentCandle.l, candle.l); currentCandle.c = candle.c; } } if (currentCandle) aggregated.push(currentCandle); return aggregated; }
             function toHeikinAshi(data) { if (data.length < 1) return []; const haData = []; let prevHaOpen = data[0].o; let prevHaClose = data[0].c; for (let i = 0; i < data.length; i++) { const curr = data[i]; const haClose = (curr.o + curr.h + curr.l + curr.c) / 4; const haOpen = (prevHaOpen + prevHaClose) / 2; const haHigh = Math.max(curr.h, haOpen, haClose); const haLow = Math.min(curr.l, haOpen, haClose); haData.push({ x: curr.x, o: haOpen, h: haHigh, l: haLow, c: haClose }); prevHaOpen = haOpen; prevHaClose = haClose; } return haData; }
