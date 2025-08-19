@@ -137,6 +137,11 @@
                 <span id="speed-value" class="font-semibold theme-text w-12 text-right">1x</span>
             </div>
             <div id="extra-settings" class="space-y-3">
+                <div class="border-t border-gray-700 my-2"></div>
+                <h3 class="font-semibold text-gray-300">Select Asset</h3>
+                <div id="asset-selector" class="grid grid-cols-3 gap-2">
+                    </div>
+                <div class="border-t border-gray-700 my-2"></div>
                 <div class="grid grid-cols-2 gap-2">
                     <button id="candle-type-btn" class="settings-btn p-2 text-sm rounded-md">Candlestick</button>
                     <button id="sounds-btn" class="settings-btn p-2 text-sm rounded-md">Sounds: ON</button>
@@ -156,6 +161,10 @@
 
         <div id="chart-container" class="flex-grow rounded-lg shadow-lg card p-2 min-h-[300px] lg:col-span-2 lg:row-span-2 lg:col-start-1 lg:row-start-1">
             <canvas id="trading-chart"></canvas>
+            <div id="asset-info" class="absolute top-2 left-3 z-10 text-white">
+                <h3 id="asset-name" class="text-xl font-bold text-shadow"></h3>
+                <p id="asset-market-cap" class="text-xs text-gray-300"></p>
+            </div>
              <div class="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex gap-1">
                 <button id="zoom-out-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-lg h-6 w-6 rounded-md transition-colors flex items-center justify-center pb-1">-</button>
                 <button id="reset-view-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-xs py-1 px-2 rounded-md transition-colors">Auto</button>
@@ -402,6 +411,17 @@
             const dumpBtn = document.getElementById('dump-btn');
             const devMenuModalEl = document.getElementById('dev-menu-modal');
             const closeDevMenuBtn = document.getElementById('close-dev-menu-btn');
+            const assetSelectorEl = document.getElementById('asset-selector');
+            const assetNameEl = document.getElementById('asset-name');
+            const assetMarketCapEl = document.getElementById('asset-market-cap');
+
+            // --- Game Assets ---
+            const assets = [
+                { name: 'SHIB', initialPrice: 0.000025, virtualSupply: 589e12, volatility: 0.009, dominated: false, isDead: false, lastHealthyCap: 0 },
+                { name: 'ETH', initialPrice: 3500, virtualSupply: 120e6, volatility: 0.006, dominated: false, isDead: false, lastHealthyCap: 0 },
+                { name: 'BTC', initialPrice: 65000, virtualSupply: 19.7e6, volatility: 0.004, dominated: false, isDead: false, lastHealthyCap: 0 }
+            ];
+            let currentAssetIndex = 0;
 
             // --- Game State ---
             const STARTING_BALANCE = 10000;
@@ -409,7 +429,7 @@
             let playerStats = { highestEquity: STARTING_BALANCE, totalTrades: 0, playerTitle: '' };
             let openPositions = [];
             let masterOneMinuteData = [];
-            let lastPrice = 50000;
+            let lastPrice = assets[currentAssetIndex].initialPrice;
             let lastTime = new Date().getTime();
             let gameLoopInterval;
             let gameSpeed = 1;
@@ -430,11 +450,21 @@
             let currentLeverage = 10;
             let currentTradeSizePercent = 10;
             let candleType = 'candlestick';
-            let marketManipulation = null; // { type: 'pump' | 'dump', duration: number }
+            let marketManipulation = null; 
             let pumpDumpCooldown = 0;
+            let randomMarketEvent = null;
+            let playerImpactEvent = null;
 
             // --- Sound Effects (using Howler.js) ---
-            const sounds = { click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }), open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }), win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }), lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }), error: new Howl({ src: ['https://cdn.pixabay.com/audio/2021/08/04/audio_542a0a32d4.mp3'] }) };
+            const sounds = { 
+                click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }), 
+                open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }), 
+                win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }), 
+                lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }), 
+                error: new Howl({ src: ['https://cdn.pixabay.com/audio/2021/08/04/audio_542a0a32d4.mp3'] }),
+                whale: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/01/18/audio_299f138153.mp3'] }),
+                dominate: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/11/17/audio_8116238b13.mp3'] })
+            };
             function playSound(soundName) { if (soundsEnabled && sounds[soundName]) { sounds[soundName].play(); } }
             
             // --- Title Tiers ---
@@ -462,11 +492,11 @@
             let currentTimeframe = 5;
 
             // --- Chart.js Setup ---
-            function createChart(persistedAnnotations = {}) { if (tradingChart) tradingChart.destroy(); const config = { type: 'candlestick', data: { datasets: [{ label: 'Price', data: [] }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { type: 'time', time: { unit: 'minute', stepSize: currentTimeframe, displayFormats: { minute: 'HH:mm' } }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' }, offset: true }, y: { position: 'right', grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' } } }, plugins: { tooltip: { enabled: false }, legend: { display: false }, annotation: { annotations: persistedAnnotations }, zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: false, mode: 'x' }, onZoomStart: () => { isAutoScrolling = false; } } } } } }; tradingChart = new Chart(ctx, config); }
+            function createChart(persistedAnnotations = {}) { if (tradingChart) tradingChart.destroy(); const config = { type: 'candlestick', data: { datasets: [{ label: 'Price', data: [] }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { type: 'time', time: { unit: 'minute', stepSize: currentTimeframe, displayFormats: { minute: 'HH:mm' } }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0' }, offset: true }, y: { position: 'right', grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#E0E0E0', callback: function(value) { if (value < 1) return value.toPrecision(2); return new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(value); } } } }, plugins: { tooltip: { enabled: false }, legend: { display: false }, annotation: { annotations: persistedAnnotations }, zoom: { pan: { enabled: false }, zoom: { wheel: { enabled: false, mode: 'x' }, onZoomStart: () => { isAutoScrolling = false; } } } } } }; tradingChart = new Chart(ctx, config); }
             
             // --- Indicator Calculation Functions (collapsed) ---
-            function calculateEMA(data, period) { const k = 2 / (period + 1); let ema = [{ x: data[0].x, y: data[0].c }]; for (let i = 1; i < data.length; i++) { const newEma = (data[i].c * k) + (ema[i-1].y * (1 - k)); ema.push({ x: data[i].x, y: newEma }); } return ema; }
-            function calculateRSI(data, period) { let rsi = []; let gains = 0; let losses = 0; for (let i = 1; i < data.length; i++) { const change = data[i].c - data[i-1].c; if (i < period) { if (change > 0) gains += change; else losses -= change; } else { if (i === period) { gains /= period; losses /= period; } else { gains = (gains * (period - 1) + (change > 0 ? change : 0)) / period; losses = (losses * (period - 1) + (change < 0 ? -change : 0)) / period; } if (losses === 0) { rsi.push({ x: data[i].x, y: 100 }); } else { const rs = gains / losses; rsi.push({ x: data[i].x, y: 100 - (100 / (1 + rs)) }); } } } return rsi; }
+            function calculateEMA(data, period) { if(data.length < 1) return []; const k = 2 / (period + 1); let ema = [{ x: data[0].x, y: data[0].c }]; for (let i = 1; i < data.length; i++) { const newEma = (data[i].c * k) + (ema[i-1].y * (1 - k)); ema.push({ x: data[i].x, y: newEma }); } return ema; }
+            function calculateRSI(data, period) { if(data.length < 2) return []; let rsi = []; let gains = 0; let losses = 0; for (let i = 1; i < data.length; i++) { const change = data[i].c - data[i-1].c; if (i < period) { if (change > 0) gains += change; else losses -= change; } else { if (i === period) { gains /= period; losses /= period; } else { gains = (gains * (period - 1) + (change > 0 ? change : 0)) / period; losses = (losses * (period - 1) + (change < 0 ? -change : 0)) / period; } if (losses === 0) { rsi.push({ x: data[i].x, y: 100 }); } else { const rs = gains / losses; rsi.push({ x: data[i].x, y: 100 - (100 / (1 + rs)) }); } } } return rsi; }
             function calculateSignals(data) { if (data.length < 22) return []; const signals = []; const emaFast = calculateEMA(data, 9); const emaSlow = calculateEMA(data, 21); const rsi = calculateRSI(data, 14); const rsiStartOffset = data.length - rsi.length; for (let i = 1; i < rsi.length; i++) { const dataIndex = i + rsiStartOffset; const trendScore = emaFast[dataIndex].y > emaSlow[dataIndex].y ? 1 : -1; const prevTrendScore = emaFast[dataIndex - 1].y > emaSlow[dataIndex - 1].y ? 1 : -1; const rsiValue = rsi[i].y; let currentSignal = 0; if (trendScore === 1 && prevTrendScore === -1 && rsiValue < 70) { currentSignal = 1; } else if (trendScore === -1 && prevTrendScore === 1 && rsiValue > 30) { currentSignal = -1; } if (currentSignal !== 0) { signals.push({ x: data[dataIndex].x, direction: currentSignal === 1 ? 'buy' : 'sell', price: data[dataIndex].l * 0.998, priceSell: data[dataIndex].h * 1.002 }); } } return signals; }
 
             // --- Bot Logic (Entry Only) ---
@@ -478,6 +508,33 @@
                 if (masterOneMinuteData.length > MAX_DATA_POINTS) masterOneMinuteData.shift();
                 
                 if (pumpDumpCooldown > 0) pumpDumpCooldown--;
+
+                const currentAsset = assets[currentAssetIndex];
+                const marketCap = lastPrice * currentAsset.virtualSupply;
+                if(!currentAsset.isDead) currentAsset.lastHealthyCap = marketCap;
+
+                // --- Domination & Crash Check ---
+                if (!currentAsset.dominated && account.balance > marketCap * 0.10) {
+                    currentAsset.dominated = true;
+                    playSound('dominate');
+                    showMessage(`You have dominated the ${currentAsset.name} market! 👑`, 'info', 5000);
+                    updateAssetSelector();
+                }
+                if (!currentAsset.isDead && lastPrice < 0.000001) {
+                    currentAsset.isDead = true;
+                    playSound('lose');
+                    showMessage(`${currentAsset.name} has crashed and been delisted! 💀`, 'error', 5000);
+                    updateAssetSelector();
+                }
+
+                // --- Random Market Event Trigger ---
+                const EVENT_CHANCE = 0.001; // 0.1% chance per tick
+                if (!marketManipulation && !randomMarketEvent && !playerImpactEvent && Math.random() < EVENT_CHANCE) {
+                    const type = Math.random() < 0.5 ? 'pump' : 'dump';
+                    const duration = Math.floor(Math.random() * 40) + 20; // Event lasts 20-60 ticks
+                    randomMarketEvent = { type, duration };
+                    showMessage(`A random market ${type} has started!`, 'info');
+                }
 
                 botDecisionLoop();
                 let totalPnl = 0;
@@ -553,7 +610,7 @@
                             borderWidth: 1.5,
                             borderDash: [6, 6],
                             label: {
-                                content: lastPrice.toFixed(2),
+                                content: lastPrice < 1 ? lastPrice.toPrecision(4) : lastPrice.toFixed(2),
                                 enabled: true,
                                 position: 'end',
                                 backgroundColor: priceLineColor,
@@ -594,7 +651,11 @@
                 if (clearSave) { localStorage.removeItem('tradingGameSave'); }
                 account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE };
                 playerStats = { highestEquity: STARTING_BALANCE, totalTrades: 0, playerTitle: '' };
-                openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0; marketManipulation = null; pumpDumpCooldown = 0;
+                openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0; 
+                marketManipulation = null; pumpDumpCooldown = 0; randomMarketEvent = null; playerImpactEvent = null;
+                assets.forEach(a => { a.dominated = false; a.isDead = false; });
+                currentAssetIndex = 0;
+                lastPrice = assets[currentAssetIndex].initialPrice;
                 document.getElementById('positions-list').innerHTML = '<p id="no-positions-msg" class="text-gray-400">No open positions.</p>';
                 regenerateMasterData(); createChart(); updateUiFromState();
                 gameOverModalEl.classList.add('hidden'); setGameSpeed(gameSpeed);
@@ -603,7 +664,7 @@
                 currentTimeframe = 5; gameSpeed = 1; soundsEnabled = true; showSignals = false; isBotActive = false; takeProfitPercent = 0; stopLossPercent = 0; settingsPanelExpanded = false; accountPanelExpanded = false; placeTradePanelExpanded = false; themeColor = '#4F46E5'; currentLeverage = 10; currentTradeSizePercent = 10; candleType = 'candlestick';
             }
             function saveGame() { 
-                const settings = { timeframe: currentTimeframe, candleType: candleType, gameSpeed: gameSpeed, soundsEnabled: soundsEnabled, signalsEnabled: showSignals, botEnabled: isBotActive, tpPercent: takeProfitPercent, slPercent: stopLossPercent, settingsPanelExpanded: settingsPanelExpanded, accountPanelExpanded: accountPanelExpanded, placeTradePanelExpanded: placeTradePanelExpanded, tradeSizePercent: currentTradeSizePercent, leverage: currentLeverage, themeColor: themeColor };
+                const settings = { timeframe: currentTimeframe, candleType: candleType, gameSpeed: gameSpeed, soundsEnabled: soundsEnabled, signalsEnabled: showSignals, botEnabled: isBotActive, tpPercent: takeProfitPercent, slPercent: stopLossPercent, settingsPanelExpanded: settingsPanelExpanded, accountPanelExpanded: accountPanelExpanded, placeTradePanelExpanded: placeTradePanelExpanded, tradeSizePercent: currentTradeSizePercent, leverage: currentLeverage, themeColor: themeColor, currentAssetIndex: currentAssetIndex, assets: assets };
                 const gameState = { account, playerStats, openPositions, masterOneMinuteData, lastPrice, lastTime, lastClosedPl, settings };
                 localStorage.setItem('tradingGameSave', JSON.stringify(gameState)); 
             }
@@ -623,6 +684,12 @@
                         currentLeverage = settings.leverage || 10;
                         themeColor = settings.themeColor || '#4F46E5';
                         candleType = settings.candleType || 'candlestick';
+                        currentAssetIndex = settings.currentAssetIndex || 0;
+                        if(settings.assets) {
+                            settings.assets.forEach((savedAsset, index) => {
+                                if(assets[index]) Object.assign(assets[index], savedAsset);
+                            });
+                        }
                     }
                     showMessage("Game progress loaded!", "info"); return true;
                 } catch (e) { console.error("Failed to load saved game state:", e); localStorage.removeItem('tradingGameSave'); return false; }
@@ -663,15 +730,15 @@
             zoomOutBtn.addEventListener('click', () => { playSound('click'); isAutoScrolling = true; const newCount = Math.min(200, Math.ceil(visibleCandleCount * 1.2)); zoomAnimation = { start: performance.now(), duration: 300, from: visibleCandleCount, to: newCount }; });
             longButton.addEventListener('click', () => placeTrade('long'));
             shortButton.addEventListener('click', () => placeTrade('short'));
-            playAgainBtn.addEventListener('click', () => { playSound('click'); startNewGame(false); });
+            playAgainBtn.addEventListener('click', () => { playSound('click'); startNewGame(true); });
             pumpBtn.addEventListener('click', () => initiateMarketManipulation('pump'));
             dumpBtn.addEventListener('click', () => initiateMarketManipulation('dump'));
             newGameBtn.addEventListener('click', () => {
                 playSound('click');
                 showConfirmationModal(
                     'New Game',
-                    'Are you sure you want to start a new game? Your current game progress will be reset, but your saved game will remain.',
-                    () => { startNewGame(false); }
+                    'Are you sure you want to start a new game? Your current progress will be completely erased.',
+                    () => { startNewGame(true); }
                 );
             });
             restoreDefaultsBtn.addEventListener('click', () => {
@@ -748,7 +815,7 @@
                         const fine = account.balance * 0.10;
                         account.balance -= fine;
                         playSound('error');
-                        showMessage(`SEC Investigation! You were fined $${fine.toFixed(2)}.`, 'error');
+                        showMessage(`SEC Investigation! You were fined ${formatCurrencyAbbreviated(fine)}.`, 'error');
                     } else {
                         marketManipulation = { type: type, duration: 30 }; // 30 candles
                         showMessage(`Market manipulation initiated!`, 'info');
@@ -757,10 +824,14 @@
             }
             
             function updatePumpDumpButtons() {
-                const disabled = pumpDumpCooldown > 0;
+                const currentAsset = assets[currentAssetIndex];
+                const disabled = pumpDumpCooldown > 0 || currentAsset.isDead;
                 pumpBtn.disabled = disabled;
                 dumpBtn.disabled = disabled;
-                if (disabled) {
+                if (currentAsset.isDead) {
+                    pumpBtn.textContent = 'Market Dead';
+                    dumpBtn.textContent = 'Market Dead';
+                } else if (disabled) {
                     const minutes = Math.floor(pumpDumpCooldown / 60);
                     const seconds = (pumpDumpCooldown % 60).toString().padStart(2, '0');
                     pumpBtn.textContent = `Cooldown ${minutes}:${seconds}`;
@@ -810,6 +881,7 @@
                 updateActiveButton(tpButtonsEl, takeProfitPercent, 'active-setting-btn');
                 updateActiveButton(slButtonsEl, stopLossPercent, 'active-setting-btn');
                 updateActiveButton(leverageButtonsExpandedEl, currentLeverage, 'active-setting-btn');
+                updateAssetSelector();
                 
                 soundsBtn.textContent = soundsEnabled ? 'Sounds: ON' : 'Sounds: OFF';
                 soundsBtn.classList.toggle('active-setting-btn', soundsEnabled);
@@ -826,7 +898,6 @@
                 placeTradeCollapsedEl.classList.toggle('hidden', placeTradePanelExpanded);
                 placeTradeToggleIconEl.textContent = placeTradePanelExpanded ? '▲' : '▼';
                 
-                // Adjust pump/dump button height based on panel state
                 if (placeTradePanelExpanded) {
                     pumpBtn.classList.replace('py-1', 'p-2');
                     dumpBtn.classList.replace('py-1', 'p-2');
@@ -843,8 +914,12 @@
                 
                 sizeSliderCollapsed.value = currentTradeSizePercent;
                 const sizeInDollars = account.balance * (currentTradeSizePercent / 100);
-                tradeSizeInput.value = sizeInDollars.toFixed(2);
+                tradeSizeInput.value = sizeInDollars.toFixed(0);
                 
+                const currentAsset = assets[currentAssetIndex];
+                assetNameEl.textContent = currentAsset.name;
+                assetMarketCapEl.textContent = `Market Cap: ${formatCurrencyAbbreviated(lastPrice * currentAsset.virtualSupply)}`;
+
                 updatePlayerTitle();
             }
             function formatCurrencyAbbreviated(value) {
@@ -856,21 +931,34 @@
                 if (absValue >= 1e3) return `${sign}$${(absValue / 1e3).toFixed(1)}k`;
                 return `${sign}$${absValue.toFixed(2)}`;
             }
-            function createAnnotationForPosition(pos) { return { type: 'line', yMin: pos.entryPrice, yMax: pos.entryPrice, borderColor: pos.type === 'long' ? '#26A69A' : '#EF5350', borderWidth: 2, borderDash: [6, 6], label: { content: `${pos.isBotTrade ? '🤖 ' : ''}${pos.type.toUpperCase()} @ ${pos.entryPrice.toFixed(2)}`, enabled: true, position: 'end', backgroundColor: 'rgba(0,0,0,0.6)' } }; }
+            function createAnnotationForPosition(pos) { return { type: 'line', yMin: pos.entryPrice, yMax: pos.entryPrice, borderColor: pos.type === 'long' ? '#26A69A' : '#EF5350', borderWidth: 2, borderDash: [6, 6], label: { content: `${pos.isBotTrade ? '🤖 ' : ''}${pos.type.toUpperCase()} @ ${pos.entryPrice < 1 ? pos.entryPrice.toPrecision(4) : pos.entryPrice.toFixed(2)}`, enabled: true, position: 'end', backgroundColor: 'rgba(0,0,0,0.6)' } }; }
             function updatePlayerTitle() { let newTitleData = titles[titles.length - 1]; for (const title of titles) { if (account.balance >= title.balance) { newTitleData = title; break; } } if (newTitleData.name !== playerStats.playerTitle) { playerStats.playerTitle = newTitleData.name; playerTitleEl.textContent = newTitleData.name; const bannerClasses = titles.map(t => t.className); titleBannerEl.classList.remove(...bannerClasses); titleBannerEl.classList.add(newTitleData.className); titleBannerEl.classList.remove('flash-animation'); void titleBannerEl.offsetWidth; titleBannerEl.classList.add('flash-animation'); } }
             function generateOneMinuteCandle() {
-                let changePercent = (Math.random() - 0.5) * 0.005; // Default random movement
+                const currentAsset = assets[currentAssetIndex];
+                if(currentAsset.isDead) {
+                    lastTime += 60000;
+                    return { x: lastTime, o: lastPrice, h: lastPrice, l: lastPrice, c: lastPrice };
+                }
 
-                if (marketManipulation) {
-                    if (marketManipulation.type === 'pump') {
-                        changePercent = (Math.random() * 0.005) + 0.003; // Strong upward bias
-                    } else { // 'dump'
-                        changePercent = -(Math.random() * 0.005) - 0.003; // Strong downward bias
+                let changePercent = (Math.random() - 0.5) * currentAsset.volatility;
+
+                let activeEvent = playerImpactEvent || marketManipulation || randomMarketEvent;
+
+                if (activeEvent) {
+                    const baseVolatility = activeEvent === playerImpactEvent ? 0.006 : 0.005;
+                    const baseTrend = activeEvent === playerImpactEvent ? 0.004 : 0.003;
+                    if (activeEvent.type === 'pump') {
+                        changePercent = (Math.random() * baseVolatility) + baseTrend;
+                    } else { 
+                        changePercent = -(Math.random() * baseVolatility) - baseTrend;
                     }
-                    marketManipulation.duration--;
-                    if (marketManipulation.duration <= 0) {
-                        marketManipulation = null;
-                        showMessage('Market forces have stabilized.', 'info');
+                    
+                    activeEvent.duration--;
+
+                    if (activeEvent.duration <= 0) {
+                        if (playerImpactEvent) { playerImpactEvent = null; showMessage('The market has absorbed your trade.', 'info'); } 
+                        else if (marketManipulation) { marketManipulation = null; showMessage('Market forces have stabilized.', 'info'); }
+                        else if (randomMarketEvent) { randomMarketEvent = null; showMessage('The random market event has ended.', 'info');}
                     }
                 }
 
@@ -879,19 +967,122 @@
                 const close = open + change; 
                 const high = Math.max(open, close) + (Math.random() * Math.abs(change) * 2); 
                 const low = Math.min(open, close) - (Math.random() * Math.abs(change) * 2); 
-                lastPrice = close; 
+                lastPrice = Math.max(0, close); 
                 lastTime += 60000; 
                 return { x: lastTime, o: open, h: high, l: low, c: close }; 
             }
-            function regenerateMasterData() { masterOneMinuteData = []; lastPrice = 50000; const historyMinutes = 5000; lastTime = new Date().getTime() - (historyMinutes * 60000); for (let i = 0; i < historyMinutes; i++) masterOneMinuteData.push(generateOneMinuteCandle()); }
+            function regenerateMasterData() {
+                const currentAsset = assets[currentAssetIndex];
+                masterOneMinuteData = [];
+                lastPrice = currentAsset.initialPrice;
+                const historyMinutes = 5000;
+                lastTime = new Date().getTime() - (historyMinutes * 60000);
+                for (let i = 0; i < historyMinutes; i++) masterOneMinuteData.push(generateOneMinuteCandle());
+            }
             function aggregateData(data, timeframeMinutes) { if (timeframeMinutes <= 1) return data; const aggregated = []; let currentCandle = null; for (const candle of data) { const candleTime = new Date(candle.x); const intervalStart = new Date(candleTime); intervalStart.setMinutes(Math.floor(candleTime.getMinutes() / timeframeMinutes) * timeframeMinutes, 0, 0); if (!currentCandle || currentCandle.x !== intervalStart.getTime()) { if (currentCandle) aggregated.push(currentCandle); currentCandle = { x: intervalStart.getTime(), o: candle.o, h: candle.h, l: candle.l, c: candle.c }; } else { currentCandle.h = Math.max(currentCandle.h, candle.h); currentCandle.l = Math.min(currentCandle.l, candle.l); currentCandle.c = candle.c; } } if (currentCandle) aggregated.push(currentCandle); return aggregated; }
             function toHeikinAshi(data) { if (data.length < 1) return []; const haData = []; let prevHaOpen = data[0].o; let prevHaClose = data[0].c; for (let i = 0; i < data.length; i++) { const curr = data[i]; const haClose = (curr.o + curr.h + curr.l + curr.c) / 4; const haOpen = (prevHaOpen + prevHaClose) / 2; const haHigh = Math.max(curr.h, haOpen, haClose); const haLow = Math.min(curr.l, haOpen, haClose); haData.push({ x: curr.x, o: haOpen, h: haHigh, l: haLow, c: haClose }); prevHaOpen = haOpen; prevHaClose = haClose; } return haData; }
             function placeTrade(type) { playSound('click'); const size = parseFloat(tradeSizeInput.value); const leverage = parseInt(currentLeverage); executeTrade(type, size, leverage, false); }
-            function executeTrade(type, margin, leverage, isBot = false) { if (isNaN(margin) || margin <= 0) { if (!isBot) showMessage("Please enter a valid trade size.", "error"); return; } if (margin > account.balance) { if (!isBot) showMessage("Trade size cannot exceed your balance.", "error"); return; } playSound('open'); playerStats.totalTrades++; const position = { id: `pos-${Date.now()}`, type, margin, leverage, entryPrice: lastPrice, pnl: 0, isBotTrade: isBot, }; const annotation = createAnnotationForPosition(position); tradingChart.options.plugins.annotation.annotations[position.id] = annotation; openPositions.push(position); }
-            function closePosition(id) { const positionIndex = openPositions.findIndex(p => p.id === id); if (positionIndex > -1) { const position = openPositions[positionIndex]; if (position.pnl >= 0) playSound('win'); else playSound('lose'); lastClosedPl = position.pnl; account.balance += position.pnl; delete tradingChart.options.plugins.annotation.annotations[id]; document.getElementById(id)?.remove(); openPositions.splice(positionIndex, 1); } }
-            function updatePositionsList() { const noMsg = document.getElementById('no-positions-msg'); if(noMsg) noMsg.style.display = openPositions.length === 0 ? 'block' : 'none'; openPositions.forEach(pos => { let posEl = document.getElementById(pos.id); if (!posEl) { posEl = document.createElement('div'); posEl.id = pos.id; posEl.innerHTML = `<span class="font-bold"></span><span></span><span></span><span></span><button class="close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded">Close</button>`; positionsListEl.appendChild(posEl); posEl.querySelector('.close-pos-btn').addEventListener('click', () => { playSound('click'); closePosition(pos.id); }); } const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'; const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30'; const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400'; posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`; const fields = posEl.children; fields[0].className = `font-bold ${typeColor}`; fields[0].textContent = (pos.isBotTrade ? '🤖 ' : '') + pos.type.toUpperCase(); fields[1].textContent = `$${pos.margin.toFixed(2)} (${pos.leverage}x)`; fields[2].textContent = pos.entryPrice.toFixed(2); fields[3].className = pnlColor; fields[3].textContent = pos.pnl.toFixed(2); }); }
+            function executeTrade(type, margin, leverage, isBot = false) {
+                const currentAsset = assets[currentAssetIndex];
+                if (currentAsset.isDead) { showMessage("This market is dead.", "error"); return; }
+                if (isNaN(margin) || margin <= 0) { if (!isBot) showMessage("Please enter a valid trade size.", "error"); return; }
+                if (margin > account.balance) { if (!isBot) showMessage("Trade size cannot exceed your balance.", "error"); return; }
+                
+                playSound('open');
+                playerStats.totalTrades++;
+                
+                const position = { id: `pos-${Date.now()}`, type, margin, leverage, entryPrice: lastPrice, pnl: 0, isBotTrade: isBot, };
+                const annotation = createAnnotationForPosition(position);
+                tradingChart.options.plugins.annotation.annotations[position.id] = annotation;
+                openPositions.push(position);
+
+                // --- Player Market Impact & Whale Intervention Logic ---
+                if (!isBot) {
+                    const marketCap = lastPrice * currentAsset.virtualSupply;
+                    const positionSize = margin * leverage;
+                    
+                    const playerPowerRatio = account.balance / marketCap;
+                    const tradeImpactRatio = positionSize / marketCap;
+
+                    const WHALE_INTERVENTION_THRESHOLD = 0.05; // Player is vulnerable if they have <5% of market cap
+                    
+                    let whaleIntervened = false;
+                    if (playerPowerRatio < WHALE_INTERVENTION_THRESHOLD && tradeImpactRatio > 0.001) {
+                        const interventionChance = Math.min(0.75, tradeImpactRatio * (1 - playerPowerRatio) * 50);
+                        if (Math.random() < interventionChance) {
+                            whaleIntervened = true;
+                            playSound('whale');
+                            const counterMove = (type === 'long') ? 'dump' : 'pump';
+                            playerImpactEvent = { type: counterMove, duration: Math.floor(Math.random() * 15) + 15 };
+                            showMessage(`A WHALE counters your trade!`, 'error', 4000);
+                        }
+                    }
+
+                    if (!whaleIntervened && tradeImpactRatio > 0.0005) {
+                        const impactDuration = Math.min(30, Math.floor(tradeImpactRatio * 1000));
+                        const impactType = (type === 'long') ? 'pump' : 'dump';
+                        marketManipulation = null;
+                        randomMarketEvent = null;
+                        playerImpactEvent = { type: impactType, duration: Math.max(5, impactDuration) };
+                        showMessage('Your large trade is moving the market!', 'info');
+                    }
+                }
+            }
+            function closePosition(id) { const positionIndex = openPositions.findIndex(p => p.id === id); if (positionIndex > -1) { const position = openPositions[positionIndex]; if (position.pnl >= 0) playSound('win'); else playSound('lose'); lastClosedPl = position.pnl; account.balance += position.pnl; delete tradingChart.options.plugins.annotation.annotations[id]; const el = document.getElementById(id); if (el) el.remove(); openPositions.splice(positionIndex, 1); } }
+            function updatePositionsList() { const noMsg = document.getElementById('no-positions-msg'); if(noMsg) noMsg.style.display = openPositions.length === 0 ? 'block' : 'none'; openPositions.forEach(pos => { let posEl = document.getElementById(pos.id); if (!posEl) { posEl = document.createElement('div'); posEl.id = pos.id; posEl.innerHTML = `<span class="font-bold"></span><span></span><span></span><span></span><button class="close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded">Close</button>`; positionsListEl.appendChild(posEl); posEl.querySelector('.close-pos-btn').addEventListener('click', () => { playSound('click'); closePosition(pos.id); }); } const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'; const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30'; const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400'; posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`; const fields = posEl.children; fields[0].className = `font-bold ${typeColor}`; fields[0].textContent = (pos.isBotTrade ? '🤖 ' : '') + pos.type.toUpperCase(); fields[1].textContent = `$${pos.margin.toFixed(2)} (${pos.leverage}x)`; fields[2].textContent = pos.entryPrice < 1 ? pos.entryPrice.toPrecision(4) : pos.entryPrice.toFixed(2); fields[3].className = pnlColor; fields[3].textContent = pos.pnl.toFixed(2); }); }
             function setGameSpeed(speed) { if (gameLoopInterval) clearInterval(gameLoopInterval); const intervalTime = Math.max(1, 1000 / speed); gameLoopInterval = setInterval(gameLoop, intervalTime); }
             let messageTimeout; function showMessage(text, type = "info", duration = 3000) { const messageBox = document.getElementById('message-box'); const messageText = document.getElementById('message-text'); if (messageTimeout) clearTimeout(messageTimeout); messageBox.style.backgroundColor = type === 'error' ? '#dc2626' : 'var(--theme-color)'; messageText.textContent = text; messageBox.classList.remove('opacity-0', 'pointer-events-none'); messageTimeout = setTimeout(() => { messageBox.classList.add('opacity-0'); setTimeout(() => messageBox.classList.add('pointer-events-none'), 300); }, duration); }
+            
+            function updateAssetSelector() {
+                assetSelectorEl.innerHTML = '';
+                assets.forEach((asset, index) => {
+                    const button = document.createElement('button');
+                    button.dataset.index = index;
+                    let content = asset.name;
+                    if (asset.dominated) content += ' 👑';
+                    if (asset.isDead) content = `💀 ${asset.name}`;
+                    button.innerHTML = content;
+                    button.className = 'settings-btn p-2 text-sm rounded-md';
+                    if (index === currentAssetIndex) {
+                        button.classList.add('active-setting-btn');
+                    }
+                    if (asset.isDead) {
+                        button.classList.add('bg-red-900/50', 'border-red-700');
+                    }
+                    button.addEventListener('click', () => switchAsset(index));
+                    assetSelectorEl.appendChild(button);
+                });
+            }
+
+            function switchAsset(index) {
+                if (index === currentAssetIndex) return;
+
+                const targetAsset = assets[index];
+                if (targetAsset.isDead) {
+                    const revivalCost = targetAsset.lastHealthyCap * 0.25;
+                    const message = `Reviving ${targetAsset.name} will cost ${formatCurrencyAbbreviated(revivalCost)}. This market was last valued at ${formatCurrencyAbbreviated(targetAsset.lastHealthyCap)}. Proceed?`;
+                    showConfirmationModal('Revive Market?', message, () => {
+                        if (account.balance >= revivalCost) {
+                            account.balance -= revivalCost;
+                            targetAsset.isDead = false;
+                            performAssetSwitch(index);
+                        } else {
+                            showMessage("You can't afford to revive this market.", 'error');
+                        }
+                    });
+                } else {
+                    performAssetSwitch(index);
+                }
+            }
+
+            function performAssetSwitch(index) {
+                showMessage(`Switching market to ${assets[index].name}. Closing all open positions.`, 'info');
+                [...openPositions].forEach(p => closePosition(p.id));
+                currentAssetIndex = index;
+                marketManipulation = null; randomMarketEvent = null; playerImpactEvent = null;
+                regenerateMasterData();
+                updateUiFromState();
+            }
 
             function showConfirmationModal(title, message, onConfirm) {
                 confirmationTitleEl.textContent = title;
