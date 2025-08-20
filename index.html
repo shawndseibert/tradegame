@@ -169,7 +169,7 @@
         
         <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-1">
             <h2 id="settings-title" class="collapsible-title text-xl font-bold mb-4 flex justify-between items-center transition-colors">
-                <span>Settings</span>
+                <span>Chart</span>
                 <span id="settings-toggle-icon">▲</span>
             </h2>
             <div id="timeframe-buttons" class="grid grid-cols-4 gap-2 mb-2">
@@ -177,6 +177,18 @@
                 <button data-value="5" class="settings-btn py-1 px-2 rounded text-xs">5m</button>
                 <button data-value="15" class="settings-btn py-1 px-2 rounded text-xs">15m</button>
                 <button data-value="60" class="settings-btn py-1 px-2 rounded text-xs">1H</button>
+            </div>
+            <div id="chart-container" class="flex-grow rounded-lg shadow-lg card p-2 min-h-[300px] mb-4">
+                <canvas id="trading-chart"></canvas>
+                <div id="asset-info" class="absolute top-2 left-3 z-10 text-white">
+                    <h3 id="asset-name" class="text-xl font-bold text-shadow"></h3>
+                    <p id="asset-market-cap" class="text-xs text-gray-300"></p>
+                </div>
+                <div id="chart-controls" class="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex gap-1">
+                    <button id="zoom-out-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-lg h-6 w-6 rounded-md transition-colors flex items-center justify-center pb-1">-</button>
+                    <button id="reset-view-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-xs py-1 px-2 rounded-md transition-colors">Auto</button>
+                    <button id="zoom-in-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-lg h-6 w-6 rounded-md transition-colors flex items-center justify-center pb-1">+</button>
+                </div>
             </div>
             <div class="flex justify-between items-center text-sm mb-4">
                 <label for="speed-slider" class="font-medium text-gray-300 shrink-0">Game Speed</label>
@@ -208,18 +220,6 @@
             </div>
         </div>
 
-        <div id="chart-container" class="flex-grow rounded-lg shadow-lg card p-2 min-h-[300px] lg:col-span-2 lg:row-span-2 lg:col-start-1 lg:row-start-1">
-            <canvas id="trading-chart"></canvas>
-            <div id="asset-info" class="absolute top-2 left-3 z-10 text-white">
-                <h3 id="asset-name" class="text-xl font-bold text-shadow"></h3>
-                <p id="asset-market-cap" class="text-xs text-gray-300"></p>
-            </div>
-             <div id="chart-controls" class="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex gap-1">
-                <button id="zoom-out-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-lg h-6 w-6 rounded-md transition-colors flex items-center justify-center pb-1">-</button>
-                <button id="reset-view-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-xs py-1 px-2 rounded-md transition-colors">Auto</button>
-                <button id="zoom-in-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-lg h-6 w-6 rounded-md transition-colors flex items-center justify-center pb-1">+</button>
-            </div>
-        </div>
 
         <div id="account-panel" class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-2">
              <h2 id="account-title" class="collapsible-title text-xl font-bold mb-3 flex justify-between items-center transition-colors">
@@ -348,7 +348,7 @@
         
     </div>
 
-    <div id="message-box" class="fixed top-20 right-5 bg-indigo-600 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 pointer-events-none z-50">
+    <div id="message-box" class="fixed top-8 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 pointer-events-none z-50">
         <p id="message-text"></p>
     </div>
 
