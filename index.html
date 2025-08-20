@@ -33,6 +33,13 @@
         #chart-container {
             position: relative;
         }
+        #chart-controls {
+            opacity: 0.15;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #chart-container:hover #chart-controls {
+            opacity: 1;
+        }
         /* --- Custom Slider Styles --- */
         input[type="range"] {
              -webkit-appearance: none; appearance: none;
@@ -200,7 +207,7 @@
                 <h3 id="asset-name" class="text-xl font-bold text-shadow"></h3>
                 <p id="asset-market-cap" class="text-xs text-gray-300"></p>
             </div>
-             <div class="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex gap-1">
+             <div id="chart-controls" class="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex gap-1">
                 <button id="zoom-out-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-lg h-6 w-6 rounded-md transition-colors flex items-center justify-center pb-1">-</button>
                 <button id="reset-view-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-xs py-1 px-2 rounded-md transition-colors">Auto</button>
                 <button id="zoom-in-btn" class="bg-gray-800/70 hover:bg-gray-700/90 text-white font-bold text-lg h-6 w-6 rounded-md transition-colors flex items-center justify-center pb-1">+</button>
@@ -811,6 +818,8 @@
                 if (clearBadgesCheckbox.checked) {
                     unlockedBadges.clear();
                     saveBadges();
+                    updateBadgeDisplay();
+                    clearBadgesCheckbox.checked = false; // Uncheck after use
                 }
 
                 account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE };
@@ -851,7 +860,11 @@
                         currentAssetIndex = settings.currentAssetIndex || 0;
                         if(settings.assets) {
                             settings.assets.forEach((savedAsset, index) => {
-                                if(assets[index]) Object.assign(assets[index], savedAsset);
+                                if(assets[index]) {
+                                    assets[index].dominated = savedAsset.dominated;
+                                    assets[index].isDead = savedAsset.isDead;
+                                    assets[index].lastHealthyCap = savedAsset.lastHealthyCap;
+                                }
                             });
                         }
                     }
