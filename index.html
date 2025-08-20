@@ -1547,6 +1547,29 @@
             }
 
             init();
+            // --- Tick Sound for Sliders ---
+            function playTickSound() {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 1000;
+                gain.gain.setValueAtTime(0, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.03, ctx.currentTime + 0.002);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.018);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.02);
+                osc.onended = () => ctx.close();
+            }
+
+            // Attach tick sound to all sliders
+            document.querySelectorAll('input[type="range"]').forEach(slider => {
+                slider.addEventListener('input', () => {
+                    playTickSound();
+                });
+            });
         });
     </script>
 </body>
