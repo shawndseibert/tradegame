@@ -18,6 +18,13 @@
             --theme-color: #4F46E5;
             --theme-color-light: #a5b4fc;
         }
+        /* Prevent text selection on the entire page */
+        html, body, * {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
         html, body {
             height: 100%;
         }
@@ -166,15 +173,15 @@
                 <span id="settings-toggle-icon">▲</span>
             </h2>
             <div id="timeframe-buttons" class="grid grid-cols-4 gap-2 mb-2">
-                <button data-value="1" class="settings-btn p-2 rounded-md text-sm">1m</button>
-                <button data-value="5" class="settings-btn p-2 rounded-md text-sm">5m</button>
-                <button data-value="15" class="settings-btn p-2 rounded-md text-sm">15m</button>
-                <button data-value="60" class="settings-btn p-2 rounded-md text-sm">1H</button>
+                <button data-value="1" class="settings-btn py-1 px-2 rounded text-xs">1m</button>
+                <button data-value="5" class="settings-btn py-1 px-2 rounded text-xs">5m</button>
+                <button data-value="15" class="settings-btn py-1 px-2 rounded text-xs">15m</button>
+                <button data-value="60" class="settings-btn py-1 px-2 rounded text-xs">1H</button>
             </div>
             <div class="flex justify-between items-center text-sm mb-4">
                 <label for="speed-slider" class="font-medium text-gray-300 shrink-0">Game Speed</label>
                 <div class="flex-grow mx-3 relative">
-                    <input type="range" id="speed-slider" min="1" max="200" value="1">
+                    <input type="range" id="speed-slider" min="1" max="10" value="1">
                 </div>
                 <span id="speed-value" class="font-semibold theme-text w-12 text-right">1x</span>
             </div>
