@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leverage Trading Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <!-- Removed Howler.js, using Web Audio API for sounds -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.0/dist/chartjs-chart-financial.min.js"></script>
@@ -421,6 +421,9 @@
                     <button id="dev-revive-asset" class="settings-btn p-2 text-sm rounded-md">Revive Asset</button>
                 </div>
                 <button id="dev-unlock-all-badges" class="settings-btn p-2 text-sm rounded-md">Unlock All Badges</button>
+                    <div class="border-t border-gray-700 mt-4 mb-2"></div>
+                    <h3 class="font-semibold">Sound Test</h3>
+                    <div id="dev-sound-buttons" class="grid grid-cols-3 gap-2 mb-2"></div>
             </div>
         </div>
     </div>
@@ -494,6 +497,7 @@
             const assetMarketCapEl = document.getElementById('asset-market-cap');
             const badgeDisplayEl = document.getElementById('badge-display');
             const noBadgesMsgEl = document.getElementById('no-badges-msg');
+                const devSoundButtonsEl = document.getElementById('dev-sound-buttons');
             
             // Game Over Stat Elements
             const liquidationReasonEl = document.getElementById('liquidation-reason');
@@ -570,17 +574,130 @@
             let playerImpactEvent = null;
 
             // --- Sound Effects (using Howler.js) ---
-            const sounds = { 
-                click: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/15/audio_24ae7339d1.mp3'] }), 
-                open: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/10/audio_c359247e4b.mp3'] }), 
-                win: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/25/audio_38f219de72.mp3'] }), 
-                lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }), 
-                error: new Howl({ src: ['https://cdn.pixabay.com/audio/2021/08/04/audio_542a0a32d4.mp3'] }),
-                whale: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/01/18/audio_299f138153.mp3'] }),
-                dominate: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/11/17/audio_8116238b13.mp3'] }),
-                badge: new Howl({ src: ['https://cdn.pixabay.com/audio/2021/08/04/audio_de5ce47291.mp3'] })
-            };
-            function playSound(soundName) { if (soundsEnabled && sounds[soundName] && !Howler.mute()) { sounds[soundName].play(); } }
+            // --- Simple Sound Effects (Web Audio API) ---
+            function playSound(soundName) {
+                if (!soundsEnabled) return;
+                const ctx = playSound.audioCtx || (playSound.audioCtx = new (window.AudioContext || window.webkitAudioContext)());
+                if (ctx.state === 'suspended') ctx.resume();
+                // Default: 50% volume
+                let gain = 0.08;
+                // Sound profiles for more variety
+                const profiles = {
+                    click: [
+                        { freq: 180, type: 'sine', duration: 0.08 },
+                        { freq: 220, type: 'triangle', duration: 0.07 },
+                        { freq: 160, type: 'sine', duration: 0.09 }
+                    ],
+                    open: [
+                        { freq: 330, type: 'triangle', duration: 0.13 },
+                        { freq: 280, type: 'sine', duration: 0.12 }
+                    ],
+                    win: [
+                        { freq: 440, type: 'triangle', duration: 0.18 },
+                        { freq: 660, type: 'triangle', duration: 0.22 },
+                        { freq: 550, type: 'sine', duration: 0.16 }
+                    ],
+                    lose: [
+                        { freq: 110, type: 'sawtooth', duration: 0.25 },
+                        { freq: 90, type: 'triangle', duration: 0.22 }
+                    ],
+                    error: [
+                        { freq: 90, type: 'square', duration: 0.18 },
+                        { freq: 70, type: 'sine', duration: 0.15 }
+                    ],
+                    badge: [
+                        { freq: 550, type: 'triangle', duration: 0.15 },
+                        { freq: 660, type: 'sine', duration: 0.13 }
+                    ],
+                    dominate: [
+                        { freq: 700, type: 'triangle', duration: 0.18 },
+                        { freq: 880, type: 'sine', duration: 0.16 }
+                    ],
+                    whale: [
+                        // Whale: long, drawn out, pitch sweep, fade out (higher pitch)
+                        { freq: 220, type: 'sine', duration: 1.8 },
+                        { freq: 180, type: 'triangle', duration: 1.5 }
+                    ],
+                    pump: [
+                        { freq: 180, type: 'triangle', duration: 0.18 },
+                        { freq: 220, type: 'sine', duration: 0.15 }
+                    ],
+                    dump: [
+                        { freq: 180, type: 'sawtooth', duration: 0.18 },
+                        { freq: 90, type: 'triangle', duration: 0.14 }
+                    ],
+                    sec_fine: [
+                        { freq: 120, type: 'square', duration: 0.22 },
+                        { freq: 100, type: 'sine', duration: 0.18 }
+                    ],
+                    revive: [
+                        { freq: 330, type: 'triangle', duration: 0.22 },
+                        { freq: 440, type: 'sine', duration: 0.18 }
+                    ],
+                    level_up: [
+                        { freq: 440, type: 'triangle', duration: 0.18 },
+                        { freq: 550, type: 'sine', duration: 0.15 }
+                    ]
+                };
+                // Pick a random profile for variety
+                const options = profiles[soundName] || [{ freq: 220, type: 'sine', duration: 0.12 }];
+                const profile = options[Math.floor(Math.random() * options.length)];
+                // Dynamic pitch based on account balance
+                // For commonly used sounds, always use a soft waveform
+                let type = profile.type;
+                if (["click", "open"].includes(soundName)) {
+                    type = "sine";
+                }
+                let duration = profile.duration + (Math.random() - 0.5) * 0.005; // Only +/- 2.5 ms
+                // Starting and minimum pitch
+                const startBalance = typeof STARTING_BALANCE !== 'undefined' ? STARTING_BALANCE : 10000;
+                const minPitchFactor = 0.35; // Pitch drops to 35% of original at high wealth
+                let bal = (typeof account !== 'undefined' && typeof account.balance === 'number') ? account.balance : startBalance;
+                // Map balance to pitch factor: high balance = lower pitch
+                let pitchFactor = 1.0 - Math.min(0.65, Math.log10(bal / startBalance) * 0.18); // log scale, max drop 65%
+                if (pitchFactor < minPitchFactor) pitchFactor = minPitchFactor;
+                let freq = profile.freq * pitchFactor + (Math.random() - 0.1) * 0.01;
+                // Envelope: gentle attack/decay
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                g.gain.value = 0.0;
+                osc.connect(g).connect(ctx.destination);
+                // Attack
+                g.gain.setValueAtTime(0.0, ctx.currentTime);
+                g.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.08);
+                // Decay
+                if (soundName === "click") {
+                    // Always short duration and soft release for click
+                    g.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration);
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    // Soft release: fade out gently over 0.05s
+                    g.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration + 0.05);
+                } else if (soundName === "whale") {
+                    // Whale: long, drawn out, pitch sweep, fade out
+                    // Descend then ascend pitch, fade out slowly
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(freq - 40, ctx.currentTime + duration * 0.5);
+                    osc.frequency.linearRampToValueAtTime(freq + 30, ctx.currentTime + duration);
+                    g.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.25);
+                    g.gain.linearRampToValueAtTime(gain * 0.7, ctx.currentTime + duration * 0.5);
+                    g.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration + 0.15);
+                } else {
+                    g.gain.linearRampToValueAtTime(0.0, ctx.currentTime + duration);
+                    // Optional: gentle pitch sweep for some sounds
+                    if (["win","badge","dominate","level_up","open"].includes(soundName)) {
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                        osc.frequency.linearRampToValueAtTime(freq + 60, ctx.currentTime + duration);
+                    } else if (["lose","error","dump","sec_fine"].includes(soundName)) {
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                        osc.frequency.linearRampToValueAtTime(freq - 40, ctx.currentTime + duration);
+                    }
+                }
+                osc.start();
+                osc.stop(ctx.currentTime + duration + 0.2);
+                osc.onended = () => { osc.disconnect(); g.disconnect(); };
+            }
             
             // --- Title Tiers ---
             const titles = [
@@ -1073,6 +1190,20 @@
             document.getElementById('dev-force-dump').addEventListener('click', () => { marketManipulation = { type: 'dump', duration: 15 }; });
             document.getElementById('dev-clear-positions').addEventListener('click', () => { [...openPositions].forEach(p => closePosition(p.id)); });
             document.getElementById('dev-unlock-all-badges').addEventListener('click', () => { BADGES.forEach(badge => unlockBadge(badge)); });
+
+                // --- Dev Sound Buttons ---
+                const soundProfiles = [
+                    'click', 'open', 'win', 'lose', 'error', 'badge', 'dominate', 'whale', 'pump', 'dump', 'sec_fine', 'revive', 'level_up'
+                ];
+                if (devSoundButtonsEl) {
+                    soundProfiles.forEach(sound => {
+                        const btn = document.createElement('button');
+                        btn.className = 'settings-btn p-2 text-xs rounded-md';
+                        btn.textContent = sound.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        btn.addEventListener('click', () => playSound(sound));
+                        devSoundButtonsEl.appendChild(btn);
+                    });
+                }
 
 
              // --- Utility Functions ---
