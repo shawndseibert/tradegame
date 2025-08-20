@@ -108,6 +108,41 @@
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .flash-animation { animation: flash 1.5s ease-out; }
         @keyframes flash { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); } 70% { box-shadow: 0 0 25px 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
+        
+        .badge {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            background-color: #374151;
+            border-radius: 6px;
+            border: 1px solid #4b5563;
+            font-size: 1.25rem; /* For emoji */
+            cursor: help;
+        }
+        .badge .badge-tooltip {
+            visibility: hidden;
+            width: 180px;
+            background-color: #111827;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -90px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            line-height: 1.2;
+        }
+        .badge:hover .badge-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="p-4 pt-16">
@@ -172,7 +207,31 @@
             </div>
         </div>
 
-        <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-2">
+        <div id="account-panel" class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-2">
+             <h2 id="account-title" class="collapsible-title text-xl font-bold mb-3 flex justify-between items-center transition-colors">
+                <span>Account</span>
+                <span id="account-toggle-icon">▲</span>
+            </h2>
+            <div id="account-details-expanded" class="space-y-2 text-sm">
+                <div class="flex justify-between"><span>Balance:</span> <span id="balance">$10,000.00</span></div>
+                <div class="flex justify-between"><span>Equity:</span> <span id="equity">$10,000.00</span></div>
+                <div class="flex justify-between"><span>Unrealized P/L:</span> <span id="unrealized-pl">$0.00</span></div>
+                <div class="flex justify-between"><span>Last P/L:</span> <span id="last-pl-expanded">$0.00</span></div>
+                <div id="badge-display-container" class="border-t border-gray-700 pt-3 mt-3">
+                    <h3 class="font-semibold text-gray-300 mb-2">Milestone Badges</h3>
+                    <div id="badge-display" class="flex flex-wrap gap-2">
+                        <p id="no-badges-msg" class="text-gray-400 text-xs">No badges unlocked yet.</p>
+                    </div>
+                </div>
+            </div>
+            <div id="account-details-collapsed" class="hidden text-sm font-semibold flex justify-around items-center">
+                <span>Balance: <span id="balance-collapsed"></span></span>
+                <span>P/L: <span id="unrealized-pl-collapsed"></span></span>
+                <span>Last: <span id="last-pl-collapsed"></span></span>
+            </div>
+        </div>
+
+        <div class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-3">
             <h2 id="place-trade-title" class="collapsible-title text-xl font-bold mb-4 flex justify-between items-center transition-colors">
                 <span>Place Trade</span>
                 <span id="place-trade-toggle-icon">▲</span>
@@ -266,24 +325,6 @@
             </div>
         </div>
 
-        <div id="account-panel" class="card rounded-lg p-4 shadow-lg lg:col-start-3 lg:row-start-3">
-             <h2 id="account-title" class="collapsible-title text-xl font-bold mb-3 flex justify-between items-center transition-colors">
-                <span>Account</span>
-                <span id="account-toggle-icon">▲</span>
-            </h2>
-            <div id="account-details-expanded" class="space-y-2 text-sm">
-                <div class="flex justify-between"><span>Balance:</span> <span id="balance">$10,000.00</span></div>
-                <div class="flex justify-between"><span>Equity:</span> <span id="equity">$10,000.00</span></div>
-                <div class="flex justify-between"><span>Unrealized P/L:</span> <span id="unrealized-pl">$0.00</span></div>
-                <div class="flex justify-between"><span>Last P/L:</span> <span id="last-pl-expanded">$0.00</span></div>
-            </div>
-            <div id="account-details-collapsed" class="hidden text-sm font-semibold flex justify-around items-center">
-                <span>Balance: <span id="balance-collapsed"></span></span>
-                <span>P/L: <span id="unrealized-pl-collapsed"></span></span>
-                <span>Last: <span id="last-pl-collapsed"></span></span>
-            </div>
-        </div>
-
         <div id="positions-panel" class="min-h-[150px] overflow-y-auto rounded-lg shadow-lg card p-4 lg:col-span-2 lg:col-start-1 lg:row-start-3">
             <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Open Positions</h2>
             <div id="positions-list" class="space-y-2">
@@ -330,6 +371,10 @@
         <div class="card p-8 rounded-lg text-center max-w-sm">
             <h2 id="confirmation-title" class="text-2xl font-bold theme-text mb-4">Confirmation</h2>
             <p id="confirmation-message" class="text-gray-300 mb-6">Are you sure?</p>
+            <div id="new-game-extra-options" class="hidden text-left my-4">
+                <input type="checkbox" id="clear-badges-checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 bg-gray-700">
+                <label for="clear-badges-checkbox" class="ml-2 text-gray-300">Reset milestone badges</label>
+            </div>
             <div class="grid grid-cols-2 gap-4">
                 <button id="confirm-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Confirm</button>
                 <button id="cancel-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Cancel</button>
@@ -418,6 +463,8 @@
             const confirmationModalEl = document.getElementById('confirmation-modal');
             const confirmationTitleEl = document.getElementById('confirmation-title');
             const confirmationMessageEl = document.getElementById('confirmation-message');
+            const newGameExtraOptionsEl = document.getElementById('new-game-extra-options');
+            const clearBadgesCheckbox = document.getElementById('clear-badges-checkbox');
             const confirmBtn = document.getElementById('confirm-btn');
             const cancelBtn = document.getElementById('cancel-btn');
             const pumpBtn = document.getElementById('pump-btn');
@@ -427,6 +474,8 @@
             const assetSelectorEl = document.getElementById('asset-selector');
             const assetNameEl = document.getElementById('asset-name');
             const assetMarketCapEl = document.getElementById('asset-market-cap');
+            const badgeDisplayEl = document.getElementById('badge-display');
+            const noBadgesMsgEl = document.getElementById('no-badges-msg');
             
             // Game Over Stat Elements
             const liquidationReasonEl = document.getElementById('liquidation-reason');
@@ -445,9 +494,9 @@
 
             // --- Game Assets ---
             const assets = [
-                { name: 'SHIB', initialPrice: 0.000025, virtualSupply: 589e12, volatility: 0.009, dominated: false, isDead: false, lastHealthyCap: 0 },
-                { name: 'ETH', initialPrice: 3500, virtualSupply: 120e6, volatility: 0.006, dominated: false, isDead: false, lastHealthyCap: 0 },
-                { name: 'BTC', initialPrice: 65000, virtualSupply: 19.7e6, volatility: 0.004, dominated: false, isDead: false, lastHealthyCap: 0 }
+                { name: 'DogeWifHat', symbol: 'DWH', initialPrice: 0.025, virtualSupply: 50e9, volatility: 0.012, dominated: false, isDead: false, lastHealthyCap: 0 },
+                { name: 'ChadToken', symbol: 'CHAD', initialPrice: 3500, virtualSupply: 120e6, volatility: 0.006, dominated: false, isDead: false, lastHealthyCap: 0 },
+                { name: 'DiamondHands', symbol: 'DMND', initialPrice: 65000, virtualSupply: 19.7e6, volatility: 0.004, dominated: false, isDead: false, lastHealthyCap: 0 }
             ];
             let currentAssetIndex = 0;
 
@@ -510,7 +559,8 @@
                 lose: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/03/24/audio_39b03b8e5c.mp3'] }), 
                 error: new Howl({ src: ['https://cdn.pixabay.com/audio/2021/08/04/audio_542a0a32d4.mp3'] }),
                 whale: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/01/18/audio_299f138153.mp3'] }),
-                dominate: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/11/17/audio_8116238b13.mp3'] })
+                dominate: new Howl({ src: ['https://cdn.pixabay.com/audio/2022/11/17/audio_8116238b13.mp3'] }),
+                badge: new Howl({ src: ['https://cdn.pixabay.com/audio/2021/08/04/audio_de5ce47291.mp3'] })
             };
             function playSound(soundName) { if (soundsEnabled && sounds[soundName]) { sounds[soundName].play(); } }
             
@@ -530,6 +580,27 @@
                 { balance: 5000,    name: 'Expert Liquidator 📉',  className: 'banner-liquidator' },
                 { balance: 0,       name: 'Ramen Connoisseur 🍜',  className: 'banner-ramen' }
             ];
+
+            // --- Badge System ---
+            const BADGES = [
+                { id: 'balance_100k', title: 'High Roller', icon: '💰', description: 'Achieve a balance of $100,000.', trigger: (stats, account) => account.balance >= 100000 },
+                { id: 'balance_1m', title: 'Millionaire', icon: '🤑', description: 'Achieve a balance of $1,000,000.', trigger: (stats, account) => account.balance >= 1000000 },
+                { id: 'balance_1b', title: 'Billionaire', icon: '🎩', description: 'Achieve a balance of $1,000,000,000.', trigger: (stats, account) => account.balance >= 1e9 },
+                { id: 'profit_10k', title: 'Big Win', icon: '🎉', description: 'Make over $10,000 on a single trade.', trigger: (stats) => stats.bestPL >= 10000 },
+                { id: 'profit_1m', title: 'Jackpot', icon: '🎰', description: 'Make over $1,000,000 on a single trade.', trigger: (stats) => stats.bestPL >= 1000000 },
+                { id: 'loss_50k', title: 'Tuition Fee', icon: '💸', description: 'Lose over $50,000 on a single trade. A costly lesson.', trigger: (stats) => stats.worstPL <= -50000 },
+                { id: 'liquidated', title: 'Rekt', icon: '💀', description: 'Get liquidated for the first time.', trigger: (stats, account, event) => event === 'liquidated' },
+                { id: 'first_pump', title: 'The Mover', icon: '📈', description: 'Successfully initiate your first market pump.', trigger: (stats) => stats.totalPumps > 0 },
+                { id: 'first_dump', title: 'The Shaker', icon: '📉', description: 'Successfully initiate your first market dump.', trigger: (stats) => stats.totalDumps > 0 },
+                { id: 'first_fine', title: 'SEC Target', icon: '👮', description: 'Pay your first SEC fine for a failed manipulation.', trigger: (stats) => stats.finesPaidCount > 0 },
+                { id: 'first_whale', title: 'Swimming with Sharks', icon: '🐋', description: 'Experience your first whale intervention.', trigger: (stats) => stats.whaleInterventions > 0 },
+                { id: 'dominate_one', title: 'Market Leader', icon: '🏆', description: 'Dominate your first market.', trigger: (stats, account, event, assets) => assets.some(a => a.dominated) },
+                { id: 'dominate_all', title: 'Master of Markets', icon: '🌎', description: 'Dominate all available markets.', trigger: (stats, account, event, assets) => assets.every(a => a.dominated) },
+                { id: 'crash_market', title: 'Market Breaker', icon: '💥', description: 'Crash an asset to zero.', trigger: (stats, account, event, assets) => assets.some(a => a.isDead) },
+                { id: 'revive_market', title: 'Savior', icon: '❤️‍🩹', description: 'Revive a dead market.', trigger: (stats, account, event) => event === 'revived' },
+            ];
+            let unlockedBadges = new Set();
+
 
             // --- Chart.js State ---
             const ctx = document.getElementById('trading-chart').getContext('2d');
@@ -617,6 +688,7 @@
                 }
                 playerStats.highestEquity = Math.max(playerStats.highestEquity, account.equity);
                 updatePlayerTitle();
+                checkAndUnlockBadges();
             }
             function renderLoop() {
                 if (zoomAnimation) {
@@ -714,6 +786,7 @@
                 if(gameLoopInterval) clearInterval(gameLoopInterval);
                 playSound('lose');
                 playerStats.liquidationReason = reason;
+                checkAndUnlockBadges('liquidated');
 
                 // Populate Stats
                 liquidationReasonEl.textContent = playerStats.liquidationReason;
@@ -734,6 +807,12 @@
             }
             function startNewGame(clearSave = false) {
                 if (clearSave) { localStorage.removeItem('tradingGameSave'); }
+                
+                if (clearBadgesCheckbox.checked) {
+                    unlockedBadges.clear();
+                    saveBadges();
+                }
+
                 account = { balance: STARTING_BALANCE, equity: STARTING_BALANCE };
                 playerStats = getInitialPlayerStats();
                 openPositions = []; lastBotSignalTime = 0; lastClosedPl = 0; 
@@ -783,6 +862,7 @@
             // --- Initial Setup ---
             function init() { 
                 playerStats = getInitialPlayerStats();
+                loadBadges();
                 const gameLoaded = loadGame(); 
                 if (!gameLoaded) { // First time playing
                     settingsPanelExpanded = false;
@@ -821,18 +901,24 @@
             dumpBtn.addEventListener('click', () => initiateMarketManipulation('dump'));
             newGameBtn.addEventListener('click', () => {
                 playSound('click');
+                newGameExtraOptionsEl.classList.remove('hidden');
                 showConfirmationModal(
                     'New Game',
                     'Are you sure you want to start a new game? Your current progress will be completely erased.',
-                    () => { startNewGame(true); }
+                    () => { startNewGame(false); }
                 );
             });
             restoreDefaultsBtn.addEventListener('click', () => {
                 playSound('click');
+                newGameExtraOptionsEl.classList.add('hidden');
                 showConfirmationModal(
                     'Restore Defaults',
-                    'Are you sure you want to restore all settings to default? This will clear your saved game and cannot be undone.',
-                    () => { restoreDefaultSettings(); startNewGame(true); }
+                    'Are you sure you want to restore all settings to default? This will clear your saved game and all badges.',
+                    () => { 
+                        clearBadgesCheckbox.checked = true;
+                        restoreDefaultSettings(); 
+                        startNewGame(true);
+                    }
                 );
             });
             themeColorPicker.addEventListener('input', (e) => { themeColor = e.target.value; updateUiFromState(); });
@@ -894,6 +980,7 @@
 
                 if (type === 'pump') playerStats.totalPumps++;
                 if (type === 'dump') playerStats.totalDumps++;
+                checkAndUnlockBadges();
 
                 showConfirmationModal(title, message, () => {
                     account.balance -= cost;
@@ -905,6 +992,7 @@
                         account.balance -= fine;
                         playerStats.finesPaidCount++;
                         playerStats.finesPaidTotal += fine;
+                        checkAndUnlockBadges();
                         playSound('error');
                         showMessage(`SEC Investigation! You were fined ${formatCurrencyAbbreviated(fine)}.`, 'error');
                     } else {
@@ -973,6 +1061,7 @@
                 updateActiveButton(slButtonsEl, stopLossPercent, 'active-setting-btn');
                 updateActiveButton(leverageButtonsExpandedEl, currentLeverage, 'active-setting-btn');
                 updateAssetSelector();
+                updateBadgeDisplay();
                 
                 soundsBtn.textContent = soundsEnabled ? 'Sounds: ON' : 'Sounds: OFF';
                 soundsBtn.classList.toggle('active-setting-btn', soundsEnabled);
@@ -1103,6 +1192,7 @@
                         if (Math.random() < interventionChance) {
                             whaleIntervened = true;
                             playerStats.whaleInterventions++;
+                            checkAndUnlockBadges();
                             playSound('whale');
                             const counterMove = (type === 'long') ? 'dump' : 'pump';
                             playerImpactEvent = { type: counterMove, duration: Math.floor(Math.random() * 15) + 15 };
@@ -1140,6 +1230,7 @@
                     const el = document.getElementById(id);
                     if (el) el.remove();
                     openPositions.splice(positionIndex, 1);
+                    checkAndUnlockBadges();
                 }
             }
             function updatePositionsList() { const noMsg = document.getElementById('no-positions-msg'); if(noMsg) noMsg.style.display = openPositions.length === 0 ? 'block' : 'none'; openPositions.forEach(pos => { let posEl = document.getElementById(pos.id); if (!posEl) { posEl = document.createElement('div'); posEl.id = pos.id; posEl.innerHTML = `<span class="font-bold"></span><span></span><span></span><span></span><button class="close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded">Close</button>`; positionsListEl.appendChild(posEl); posEl.querySelector('.close-pos-btn').addEventListener('click', () => { playSound('click'); closePosition(pos.id); }); } const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'; const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30'; const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400'; posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`; const fields = posEl.children; fields[0].className = `font-bold ${typeColor}`; fields[0].textContent = (pos.isBotTrade ? '🤖 ' : '') + pos.type.toUpperCase(); fields[1].textContent = `$${pos.margin.toFixed(2)} (${pos.leverage}x)`; fields[2].textContent = pos.entryPrice < 1 ? pos.entryPrice.toPrecision(4) : pos.entryPrice.toFixed(2); fields[3].className = pnlColor; fields[3].textContent = pos.pnl.toFixed(2); }); }
@@ -1151,9 +1242,9 @@
                 assets.forEach((asset, index) => {
                     const button = document.createElement('button');
                     button.dataset.index = index;
-                    let content = asset.name;
+                    let content = asset.symbol;
                     if (asset.dominated) content += ' 👑';
-                    if (asset.isDead) content = `💀 ${asset.name}`;
+                    if (asset.isDead) content = `💀 ${asset.symbol}`;
                     button.innerHTML = content;
                     button.className = 'settings-btn p-2 text-sm rounded-md';
                     if (index === currentAssetIndex) {
@@ -1178,6 +1269,7 @@
                         if (account.balance >= revivalCost) {
                             account.balance -= revivalCost;
                             targetAsset.isDead = false;
+                            checkAndUnlockBadges('revived');
                             performAssetSwitch(index);
                         } else {
                             showMessage("You can't afford to revive this market.", 'error');
@@ -1197,9 +1289,57 @@
                 updateUiFromState();
             }
 
+            // --- Badge Logic ---
+            function saveBadges() { localStorage.setItem('tradingGameBadges', JSON.stringify(Array.from(unlockedBadges))); }
+            function loadBadges() { const saved = localStorage.getItem('tradingGameBadges'); if (saved) { unlockedBadges = new Set(JSON.parse(saved)); } }
+            function unlockBadge(badge) {
+                if (!unlockedBadges.has(badge.id)) {
+                    unlockedBadges.add(badge.id);
+                    saveBadges();
+                    playSound('badge');
+                    showMessage(`Badge Unlocked: ${badge.icon} ${badge.title}`, 'info', 4000);
+                    updateBadgeDisplay();
+                }
+            }
+            function checkAndUnlockBadges(event = null) {
+                BADGES.forEach(badge => {
+                    if (unlockedBadges.has(badge.id)) return;
+                    if (badge.trigger(playerStats, account, event, assets)) {
+                        unlockBadge(badge);
+                    }
+                });
+            }
+            function updateBadgeDisplay() {
+                badgeDisplayEl.innerHTML = '';
+                if (unlockedBadges.size === 0) {
+                    noBadgesMsgEl.style.display = 'block';
+                } else {
+                    noBadgesMsgEl.style.display = 'none';
+                    unlockedBadges.forEach(badgeId => {
+                        const badge = BADGES.find(b => b.id === badgeId);
+                        if (badge) {
+                            const badgeEl = document.createElement('div');
+                            badgeEl.className = 'badge';
+                            badgeEl.innerHTML = `
+                                ${badge.icon}
+                                <span class="badge-tooltip">
+                                    <strong class="block">${badge.title}</strong>
+                                    ${badge.description}
+                                </span>
+                            `;
+                            badgeDisplayEl.appendChild(badgeEl);
+                        }
+                    });
+                }
+            }
+
             function showConfirmationModal(title, message, onConfirm) {
                 confirmationTitleEl.textContent = title;
                 confirmationMessageEl.textContent = message;
+                
+                if (title !== 'New Game') {
+                    newGameExtraOptionsEl.classList.add('hidden');
+                }
                 
                 const confirmButtonColor = title === 'Restore Defaults' ? 'bg-red-700' : 'bg-indigo-600';
                 const confirmButtonHoverColor = title === 'Restore Defaults' ? 'hover:bg-red-800' : 'hover:bg-indigo-700';
