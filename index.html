@@ -101,15 +101,27 @@
             </div>
             <div id="chart-controls" class="space-y-3">
                 <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-sm font-medium text-gray-300">Timeframe</label>
-                        <button id="candle-toggle-btn" class="bg-gray-700 text-xs py-1 px-2 rounded transition-colors">CS</button>
-                    </div>
+                    <!-- Removed Timeframe label -->
                     <div id="timeframe-buttons" class="grid grid-cols-4 gap-2 mt-2">
                         <button class="bg-gray-700 text-xs py-1 rounded transition-colors timeframe-btn" data-timeframe="1">1m</button>
                         <button class="bg-gray-700 text-xs py-1 rounded transition-colors timeframe-btn" data-timeframe="5">5m</button>
                         <button class="bg-gray-700 text-xs py-1 rounded transition-colors timeframe-btn" data-timeframe="15">15m</button>
                         <button class="bg-gray-700 text-xs py-1 rounded transition-colors timeframe-btn" data-timeframe="60">1h</button>
+                    </div>
+                    <!-- Asset Selector and Candlestick Type in same row -->
+                    <div id="asset-row-group">
+                        <div class="flex items-center justify-between gap-2 mt-4">
+                            <div class="flex gap-2" id="asset-buttons-row">
+                                <!-- Asset buttons will be injected here -->
+                            </div>
+                            <button id="candle-toggle-btn" class="bg-gray-700 text-xs py-1 px-2 rounded transition-colors">CS</button>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-gray-400">Selected Asset:</span>
+                            <span id="selected-asset-label" class="ml-2 font-bold text-indigo-400">Asset 1</span>
+                            <span class="ml-4 text-sm text-gray-400">Qty:</span>
+                            <span id="selected-asset-qty" class="ml-2 font-bold text-green-400">100</span>
+                        </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -214,16 +226,19 @@
             const chartContainer = document.getElementById('chart-container');
             function setChartPanelState(collapsed) {
                 chartPanelCollapsed = collapsed;
+                const assetRowGroup = document.getElementById('asset-row-group');
                 if (chartPanelCollapsed) {
                     chartControls.querySelectorAll(':scope > div:not(:first-child)').forEach(el => el.style.display = 'none');
                     chartToggleBtn.textContent = 'Expand';
                     chartContainer.classList.remove('min-h-[300px]');
                     chartContainer.classList.add('min-h-[200px]');
+                    if (assetRowGroup) assetRowGroup.style.display = 'none';
                 } else {
                     chartControls.querySelectorAll(':scope > div').forEach(el => el.style.display = '');
                     chartToggleBtn.textContent = 'Collapse';
                     chartContainer.classList.remove('min-h-[200px]');
                     chartContainer.classList.add('min-h-[300px]');
+                    if (assetRowGroup) assetRowGroup.style.display = '';
                 }
             }
             chartToggleBtn.addEventListener('click', () => {
@@ -306,12 +321,16 @@
             const sizePercentageButtonsEl = document.getElementById('size-percentage-buttons');
 
             // --- Game State ---
+            // Assets: generic names for now
+            let assets = [
+                { name: 'Asset 1', quantity: 100, price: 50000, masterOneMinuteData: [], lastPrice: 50000, lastTime: new Date().getTime() },
+                { name: 'Asset 2', quantity: 50, price: 20000, masterOneMinuteData: [], lastPrice: 20000, lastTime: new Date().getTime() },
+                { name: 'Asset 3', quantity: 250, price: 1000, masterOneMinuteData: [], lastPrice: 1000, lastTime: new Date().getTime() }
+            ];
+            let selectedAssetIndex = 0;
             let account = { balance: 10000, equity: 10000 };
             let openPositions = [];
             let tradeHistory = [];
-            let masterOneMinuteData = [];
-            let lastPrice = 50000;
-            let lastTime = new Date().getTime();
             let gameLoopInterval;
             const MAX_DATA_POINTS = 10000;
 
@@ -438,21 +457,21 @@
             }
 
             // --- Data Generation & Transformation ---
-            function generateOneMinuteCandle() {
+            function generateOneMinuteCandle(asset) {
                 const changePercent = (Math.random() - 0.5) * 0.005;
-                const change = lastPrice * changePercent;
-                const open = lastPrice; const close = open + change;
+                const change = asset.lastPrice * changePercent;
+                const open = asset.lastPrice; const close = open + change;
                 const high = Math.max(open, close) + (Math.random() * Math.abs(change) * 2);
                 const low = Math.min(open, close) - (Math.random() * Math.abs(change) * 2);
-                lastPrice = close; lastTime += 60000;
-                return { x: lastTime, o: open, h: high, l: low, c: close };
+                asset.lastPrice = close; asset.lastTime += 60000;
+                return { x: asset.lastTime, o: open, h: high, l: low, c: close };
             }
 
-            function regenerateMasterData() {
-                masterOneMinuteData = []; lastPrice = 50000;
+            function regenerateMasterData(asset) {
+                asset.masterOneMinuteData = []; asset.lastPrice = asset.price;
                 const historyMinutes = 5000;
-                lastTime = new Date().getTime() - (historyMinutes * 60000);
-                for (let i = 0; i < historyMinutes; i++) masterOneMinuteData.push(generateOneMinuteCandle());
+                asset.lastTime = new Date().getTime() - (historyMinutes * 60000);
+                for (let i = 0; i < historyMinutes; i++) asset.masterOneMinuteData.push(generateOneMinuteCandle(asset));
             }
 
             function aggregateData(data, timeframeMinutes) {
@@ -478,40 +497,33 @@
             
             // --- Game & Render Loops ---
             function gameLoop() {
-                masterOneMinuteData.push(generateOneMinuteCandle());
-                if (masterOneMinuteData.length > MAX_DATA_POINTS) masterOneMinuteData.shift();
+                const asset = assets[selectedAssetIndex];
+                asset.masterOneMinuteData.push(generateOneMinuteCandle(asset));
+                if (asset.masterOneMinuteData.length > MAX_DATA_POINTS) asset.masterOneMinuteData.shift();
 
                 let totalPnl = 0;
                 // Liquidation logic
-                // Get the latest candle
-                let latestCandle = masterOneMinuteData[masterOneMinuteData.length - 1];
+                let latestCandle = asset.masterOneMinuteData[asset.masterOneMinuteData.length - 1];
                 for (let i = openPositions.length - 1; i >= 0; i--) {
                     const pos = openPositions[i];
-                    const priceDiff = lastPrice - pos.entryPrice;
+                    if (pos.assetIndex !== selectedAssetIndex) continue;
+                    const priceDiff = asset.lastPrice - pos.entryPrice;
                     const quantity = (pos.margin * pos.leverage) / pos.entryPrice;
                     pos.pnl = (pos.type === 'long') ? priceDiff * quantity : -priceDiff * quantity;
-                    // Calculate liquidation price
                     let liquidationPrice;
                     let wickLiquidated = false;
                     if (pos.type === 'long') {
                         liquidationPrice = pos.entryPrice - (pos.entryPrice / pos.leverage);
-                        // Liquidate if candle's low crosses liquidation price
-                        if (latestCandle.l <= liquidationPrice) {
-                            wickLiquidated = true;
-                        }
+                        if (latestCandle.l <= liquidationPrice) { wickLiquidated = true; }
                     } else {
                         liquidationPrice = pos.entryPrice + (pos.entryPrice / pos.leverage);
-                        // Liquidate if candle's high crosses liquidation price
-                        if (latestCandle.h >= liquidationPrice) {
-                            wickLiquidated = true;
-                        }
+                        if (latestCandle.h >= liquidationPrice) { wickLiquidated = true; }
                     }
                     if (wickLiquidated) {
-                        // Add to trade history
                         tradeHistory.push({
                             ...pos,
                             closedPrice: liquidationPrice,
-                            closedPnl: -pos.margin, // Margin lost
+                            closedPnl: -pos.margin,
                             closedAt: new Date().getTime(),
                             reason: 'Liquidated'
                         });
@@ -525,6 +537,23 @@
                     totalPnl += pos.pnl;
                 }
                 account.equity = account.balance + totalPnl;
+
+                // --- End Game Logic ---
+                if (account.balance <= 0.01 && openPositions.length === 0) {
+                    showMessage('Game Over! Starting new game...', 'error', 4000);
+                    // Reset all game state
+                    account = { balance: 10000, equity: 10000 };
+                    openPositions = [];
+                    tradeHistory = [];
+                    assets.forEach(asset => {
+                        asset.quantity = 100;
+                        asset.price = asset.lastPrice = asset.name === 'Asset 1' ? 50000 : asset.name === 'Asset 2' ? 20000 : 1000;
+                        regenerateMasterData(asset);
+                    });
+                    selectedAssetIndex = 0;
+                    uiNeedsUpdate = true;
+                    return;
+                }
                 uiNeedsUpdate = true;
             }
 
@@ -548,8 +577,9 @@ function updateTradeSizeFromPercent() {
 }
 
             function renderLoop() {
-                if (uiNeedsUpdate && masterOneMinuteData.length > 0) {
-                    const aggregatedData = aggregateData(masterOneMinuteData, currentTimeframe);
+                const asset = assets[selectedAssetIndex];
+                if (uiNeedsUpdate && asset.masterOneMinuteData.length > 0) {
+                    const aggregatedData = aggregateData(asset.masterOneMinuteData, currentTimeframe);
                     if (aggregatedData.length === 0) { requestAnimationFrame(renderLoop); return; }
                     let displayData = (candleType === 'heikinashi') ? toHeikinAshi(aggregatedData) : aggregatedData;
                     tradingChart.data.datasets[0].data = displayData;
@@ -557,14 +587,10 @@ function updateTradeSizeFromPercent() {
                     // --- Current Price Line Annotation ---
                     const lastCandle = displayData[displayData.length - 1];
                     const lastPrice = lastCandle.c;
-                    let color = 'rgba(156,163,175,0.75)'; // neutral gray, 75% opacity
-                    if (lastCandle.c > lastCandle.o) color = 'rgba(38,166,154,0.75)'; // green matches long position (#26A69A)
-                    else if (lastCandle.c < lastCandle.o) color = 'rgba(239,83,80,0.75)'; // red matches short position (#EF5350)
+                    let color = 'rgba(156,163,175,0.75)';
+                    if (lastCandle.c > lastCandle.o) color = 'rgba(38,166,154,0.75)';
+                    else if (lastCandle.c < lastCandle.o) color = 'rgba(239,83,80,0.75)';
 
-                    // Remove previous annotations if exist
-                    if (tradingChart.options.plugins.annotation.annotations.currentPriceLine) {
-                        delete tradingChart.options.plugins.annotation.annotations.currentPriceLine;
-                    }
                     if (tradingChart.options.plugins.annotation.annotations.currentPriceLine) {
                         delete tradingChart.options.plugins.annotation.annotations.currentPriceLine;
                     }
@@ -584,7 +610,6 @@ function updateTradeSizeFromPercent() {
                     const firstVisibleCandleTime = displayData[firstVisibleCandleIndex].x;
                     tradingChart.options.scales.x.max = lastCandleTime;
                     tradingChart.options.scales.x.min = firstVisibleCandleTime;
-                    // Set y-axis min/max based on visible candles only
                     const visibleCandles = displayData.slice(firstVisibleCandleIndex);
                     const yMin = Math.min(...visibleCandles.map(c => c.l));
                     const yMax = Math.max(...visibleCandles.map(c => c.h));
@@ -592,22 +617,31 @@ function updateTradeSizeFromPercent() {
                     tradingChart.options.scales.y.max = yMax;
                     tradingChart.update('none');
 
-                    // Abbreviate balance if account panel is collapsed
+                    // Update asset label and quantity
+                    document.getElementById('selected-asset-label').textContent = asset.name;
+                    document.getElementById('selected-asset-qty').textContent = asset.quantity;
+
                     if (accountPanelCollapsed) {
                         balanceEl.textContent = abbreviateBalance(account.balance);
                     } else {
                         balanceEl.textContent = `$${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                     }
-                    // Always update margin if percent button is active
                     updateTradeSizeFromPercent();
 
-                    // Update live P/L (unrealized)
                     const unrealizedPlEl = document.getElementById('unrealized-pl');
-                    const totalPnl = account.equity - account.balance;
-                    unrealizedPlEl.textContent = `$${totalPnl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                    unrealizedPlEl.style.color = totalPnl >= 0 ? '#4ade80' : '#f87171';
+                    const assetPositions = openPositions.filter(pos => pos.assetIndex === selectedAssetIndex);
+                    let assetPnl = 0;
+                    for (let i = 0; i < assetPositions.length; i++) {
+                        assetPnl += assetPositions[i].pnl || 0;
+                    }
+                    if (assetPositions.length > 0) {
+                        unrealizedPlEl.textContent = `$${assetPnl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        unrealizedPlEl.style.color = assetPnl >= 0 ? '#4ade80' : '#f87171';
+                    } else {
+                        unrealizedPlEl.textContent = '$0.00';
+                        unrealizedPlEl.style.color = '#4ade80';
+                    }
 
-                    // Update last P/L (last closed position)
                     const lastPlEl = document.getElementById('last-pl');
                     const lastClosedPl = window.lastClosedPl ?? 0;
                     lastPlEl.textContent = `$${lastClosedPl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -621,10 +655,29 @@ function updateTradeSizeFromPercent() {
             
             // --- Initial Setup ---
             function init() {
-                // currentTimeframe is already set and managed by buttons
-                regenerateMasterData();
+                // Initialize all assets' data
+                assets.forEach(asset => regenerateMasterData(asset));
                 createChart();
                 setGameSpeed(1);
+                // Asset selector buttons
+                const assetButtonsRow = document.getElementById('asset-buttons-row');
+                assetButtonsRow.innerHTML = '';
+                assets.forEach((asset, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'bg-gray-700 text-xs py-1 px-2 rounded transition-colors asset-btn';
+                    btn.textContent = asset.name;
+                    btn.dataset.assetIndex = idx;
+                    if (idx === selectedAssetIndex) {
+                        btn.classList.add('bg-indigo-600', 'text-white');
+                    }
+                    btn.addEventListener('click', () => {
+                        selectedAssetIndex = idx;
+                        document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('bg-indigo-600', 'text-white'));
+                        btn.classList.add('bg-indigo-600', 'text-white');
+                        uiNeedsUpdate = true;
+                    });
+                    assetButtonsRow.appendChild(btn);
+                });
                 requestAnimationFrame(renderLoop);
             }
 
@@ -634,13 +687,13 @@ function updateTradeSizeFromPercent() {
             const closeShortBtn = document.getElementById('close-short-button');
             if (closeLongBtn) {
                 closeLongBtn.addEventListener('click', () => {
-                    const firstLongIdx = openPositions.findIndex(pos => pos.type === 'long');
+                    const asset = assets[selectedAssetIndex];
+                    const firstLongIdx = openPositions.findIndex(pos => pos.type === 'long' && pos.assetIndex === selectedAssetIndex);
                     if (firstLongIdx !== -1) {
                         const pos = openPositions[firstLongIdx];
-                        // Close logic: add to history, update balance, remove annotation
                         tradeHistory.push({
                             ...pos,
-                            closedPrice: lastPrice,
+                            closedPrice: asset.lastPrice,
                             closedPnl: pos.pnl,
                             closedAt: new Date().getTime(),
                             reason: 'Closed (mobile)'
@@ -651,7 +704,7 @@ function updateTradeSizeFromPercent() {
                         delete tradingChart.options.plugins.annotation.annotations[pos.id + '_liq'];
                         document.getElementById(pos.id)?.remove();
                         openPositions.splice(firstLongIdx, 1);
-                        showMessage(`Closed LONG @ ${lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
+                        showMessage(`Closed LONG @ ${asset.lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
                         uiNeedsUpdate = true;
                     } else {
                         showMessage('No open LONG positions to close.', 'error');
@@ -660,12 +713,13 @@ function updateTradeSizeFromPercent() {
             }
             if (closeShortBtn) {
                 closeShortBtn.addEventListener('click', () => {
-                    const firstShortIdx = openPositions.findIndex(pos => pos.type === 'short');
+                    const asset = assets[selectedAssetIndex];
+                    const firstShortIdx = openPositions.findIndex(pos => pos.type === 'short' && pos.assetIndex === selectedAssetIndex);
                     if (firstShortIdx !== -1) {
                         const pos = openPositions[firstShortIdx];
                         tradeHistory.push({
                             ...pos,
-                            closedPrice: lastPrice,
+                            closedPrice: asset.lastPrice,
                             closedPnl: pos.pnl,
                             closedAt: new Date().getTime(),
                             reason: 'Closed (mobile)'
@@ -676,7 +730,7 @@ function updateTradeSizeFromPercent() {
                         delete tradingChart.options.plugins.annotation.annotations[pos.id + '_liq'];
                         document.getElementById(pos.id)?.remove();
                         openPositions.splice(firstShortIdx, 1);
-                        showMessage(`Closed SHORT @ ${lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
+                        showMessage(`Closed SHORT @ ${asset.lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
                         uiNeedsUpdate = true;
                     } else {
                         showMessage('No open SHORT positions to close.', 'error');
@@ -700,7 +754,8 @@ function updateTradeSizeFromPercent() {
                 uiNeedsUpdate = true;
             });
             document.getElementById('minus-btn').addEventListener('click', () => {
-                visibleCandleCount = Math.min(masterOneMinuteData.length, visibleCandleCount + 10);
+                const asset = assets[selectedAssetIndex];
+                visibleCandleCount = Math.min(asset.masterOneMinuteData.length, visibleCandleCount + 10);
                 uiNeedsUpdate = true;
             });
             // Timeframe is now managed by button clicks above
@@ -735,25 +790,54 @@ function updateTradeSizeFromPercent() {
             // --- Utility Functions (unchanged, collapsed for brevity) ---
             function toHeikinAshi(data) { if (data.length < 1) return []; const haData = []; let prevHaOpen = data[0].o; let prevHaClose = data[0].c; for (let i = 0; i < data.length; i++) { const curr = data[i]; const haClose = (curr.o + curr.h + curr.l + curr.c) / 4; const haOpen = (prevHaOpen + prevHaClose) / 2; const haHigh = Math.max(curr.h, haOpen, haClose); const haLow = Math.min(curr.l, haOpen, haClose); haData.push({ x: curr.x, o: haOpen, h: haHigh, l: haLow, c: haClose }); prevHaOpen = haOpen; prevHaClose = haClose; } return haData; }
             function placeTrade(type) {
+                const asset = assets[selectedAssetIndex];
                 const size = parseFloat(tradeSizeInput.value);
                 if (isNaN(size) || size <= 0) {
                     showMessage("Please enter a valid trade size.", "error");
                     return;
                 }
-                if (size > account.balance) {
+                if (size - account.balance > 0.01) {
                     showMessage("Trade size cannot exceed your balance.", "error");
                     return;
                 }
-                account.balance -= size; // Deduct margin from balance
+                account.balance -= size;
+
+                // --- Price Impact Logic ---
+                // Calculate how many units are being bought/sold
+                // For simplicity, treat margin as the amount spent on the asset
+                let units = size / asset.lastPrice;
+                // Impact factor: how much price moves per % of asset quantity traded
+                let impact = units / asset.quantity; // e.g. 0.1 means 10% of pool
+                let priceMove = impact * asset.lastPrice * 0.5; // 0.5 = impact multiplier (tweakable)
+                if (type === 'long') {
+                    asset.lastPrice += priceMove;
+                } else {
+                    asset.lastPrice -= priceMove;
+                }
+                // Clamp price to minimum 0.01
+                asset.lastPrice = Math.max(0.01, asset.lastPrice);
+                // Do NOT adjust asset quantity (realistic market simulation)
+
+                // Update latest candle to reflect price change immediately
+                if (asset.masterOneMinuteData.length > 0) {
+                    let lastCandle = asset.masterOneMinuteData[asset.masterOneMinuteData.length - 1];
+                    // Update close price
+                    lastCandle.c = asset.lastPrice;
+                    // Update high/low if needed
+                    lastCandle.h = Math.max(lastCandle.h, asset.lastPrice);
+                    lastCandle.l = Math.min(lastCandle.l, asset.lastPrice);
+                }
+
                 const position = {
                     id: `pos-${Date.now()}`,
                     type,
                     margin: size,
                     leverage: parseInt(leverageSlider.value),
-                    entryPrice: lastPrice,
+                    entryPrice: asset.lastPrice,
                     pnl: 0,
+                    assetIndex: selectedAssetIndex,
+                    units: units
                 };
-                // Add entry price annotation
                 const annotation = {
                     type: 'line',
                     yMin: position.entryPrice,
@@ -770,21 +854,17 @@ function updateTradeSizeFromPercent() {
                 };
                 tradingChart.options.plugins.annotation.annotations[position.id] = annotation;
 
-                // Calculate liquidation price (simple cross margin formula)
-                // For long: entryPrice - (entryPrice / leverage)
-                // For short: entryPrice + (entryPrice / leverage)
                 let liquidationPrice;
                 if (type === 'long') {
                     liquidationPrice = position.entryPrice - (position.entryPrice / position.leverage);
                 } else {
                     liquidationPrice = position.entryPrice + (position.entryPrice / position.leverage);
                 }
-                // Add amber dashed liquidation line annotation
                 tradingChart.options.plugins.annotation.annotations[position.id + '_liq'] = {
                     type: 'line',
                     yMin: liquidationPrice,
                     yMax: liquidationPrice,
-                    borderColor: '#FFC107', // amber
+                    borderColor: '#FFC107',
                     borderWidth: 1,
                     borderDash: [4, 4],
                     borderOpacity: 0.85,
@@ -805,10 +885,10 @@ function updateTradeSizeFromPercent() {
                 const positionIndex = openPositions.findIndex(p => p.id === id);
                 if (positionIndex > -1) {
                     const position = openPositions[positionIndex];
-                    account.balance += position.margin; // Return margin to balance
-                    account.balance += position.pnl; // Add PnL
-                    window.lastClosedPl = position.pnl; // Track last closed P/L
-                    // Add to trade history
+                    // Track last closed P/L and update equity BEFORE removing position
+                    window.lastClosedPl = position.pnl;
+                    account.balance += position.margin;
+                    account.balance += position.pnl;
                     tradeHistory.push({
                         ...position,
                         closedPrice: lastPrice,
@@ -819,14 +899,33 @@ function updateTradeSizeFromPercent() {
                     delete tradingChart.options.plugins.annotation.annotations[id];
                     delete tradingChart.options.plugins.annotation.annotations[id + '_liq'];
                     document.getElementById(id)?.remove();
+                    // Temporarily remove position for equity calculation
+                    const tempPositions = openPositions.slice();
+                    tempPositions.splice(positionIndex, 1);
+                    let totalPnl = 0;
+                    for (let i = 0; i < tempPositions.length; i++) {
+                        // Only count positions for selected asset
+                        if (tempPositions[i].assetIndex === selectedAssetIndex) {
+                            totalPnl += tempPositions[i].pnl || 0;
+                        }
+                    }
+                    account.equity = account.balance + totalPnl;
                     openPositions.splice(positionIndex, 1);
+                    // If no open positions for selected asset, set unrealized P/L to zero
+                    if (!openPositions.some(pos => pos.assetIndex === selectedAssetIndex)) {
+                        const unrealizedPlEl = document.getElementById('unrealized-pl');
+                        unrealizedPlEl.textContent = '$0.00';
+                        unrealizedPlEl.style.color = '#4ade80';
+                    }
                     uiNeedsUpdate = true;
                 }
             }
             function updatePositionsList() { noPositionsMsgEl.style.display = openPositions.length === 0 ? 'block' : 'none'; openPositions.forEach(pos => { let posEl = document.getElementById(pos.id); if (!posEl) { posEl = document.createElement('div'); posEl.id = pos.id; posEl.innerHTML = `<span class="font-bold"></span><span></span><span></span><span></span><button class="close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded">Close</button>`; positionsListEl.appendChild(posEl); posEl.querySelector('.close-pos-btn').addEventListener('click', () => closePosition(pos.id)); } const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'; const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30'; const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400'; posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`; const fields = posEl.children; fields[0].className = `font-bold ${typeColor}`; fields[0].textContent = pos.type.toUpperCase(); fields[1].textContent = `$${pos.margin.toFixed(2)} (${pos.leverage}x)`; fields[2].textContent = pos.entryPrice.toFixed(2); fields[3].className = pnlColor; fields[3].textContent = pos.pnl.toFixed(2); }); }
             function updatePositionsList() {
-                // Open positions
-                noPositionsMsgEl.style.display = openPositions.length === 0 ? 'block' : 'none';
+                // Only show positions for selected asset
+                const assetIdx = selectedAssetIndex;
+                const filteredPositions = openPositions.filter(pos => pos.assetIndex === assetIdx);
+                noPositionsMsgEl.style.display = filteredPositions.length === 0 ? 'block' : 'none';
                 function abbreviateNum(num) {
                     if (num >= 1e9) return (num/1e9).toFixed(2) + 'B';
                     if (num >= 1e6) return (num/1e6).toFixed(2) + 'M';
@@ -834,15 +933,35 @@ function updateTradeSizeFromPercent() {
                     return num.toFixed(2);
                 }
                 const isMobile = window.innerWidth <= 640;
-                openPositions.forEach(pos => {
-                    let posEl = document.getElementById(pos.id);
-                    if (!posEl) {
-                        posEl = document.createElement('div');
-                        posEl.id = pos.id;
-                        posEl.innerHTML = `<span class=\"font-bold\"></span><span></span><span></span><span></span><button class=\"close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded\">Close</button>`;
-                        positionsListEl.appendChild(posEl);
-                        posEl.querySelector('.close-pos-btn').addEventListener('click', () => closePosition(pos.id));
-                    }
+                // Remove all position elements first
+                positionsListEl.querySelectorAll('div').forEach(el => el.remove());
+                filteredPositions.forEach(pos => {
+                    let posEl = document.createElement('div');
+                    posEl.id = pos.id;
+                    posEl.innerHTML = `<span class=\"font-bold\"></span><span></span><span></span><span></span><button class=\"close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded\">Close</button>`;
+                    positionsListEl.appendChild(posEl);
+                    posEl.querySelector('.close-pos-btn').addEventListener('click', () => {
+                        // Only close if position matches selected asset
+                        if (pos.assetIndex === selectedAssetIndex) {
+                            const asset = assets[selectedAssetIndex];
+                            tradeHistory.push({
+                                ...pos,
+                                closedPrice: asset.lastPrice,
+                                closedPnl: pos.pnl,
+                                closedAt: new Date().getTime(),
+                                reason: 'Closed'
+                            });
+                            account.balance += pos.margin + pos.pnl;
+                            window.lastClosedPl = pos.pnl;
+                            delete tradingChart.options.plugins.annotation.annotations[pos.id];
+                            delete tradingChart.options.plugins.annotation.annotations[pos.id + '_liq'];
+                            document.getElementById(pos.id)?.remove();
+                            const idx = openPositions.findIndex(p => p.id === pos.id);
+                            if (idx !== -1) openPositions.splice(idx, 1);
+                            showMessage(`Closed ${pos.type.toUpperCase()} @ ${asset.lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
+                            uiNeedsUpdate = true;
+                        }
+                    });
                     const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400';
                     const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30';
                     const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400';
@@ -866,10 +985,10 @@ function updateTradeSizeFromPercent() {
                 // Trade history
                 const historyListEl = document.getElementById('history-list');
                 const noHistoryMsgEl = document.getElementById('no-history-msg');
-                // Clear old history
                 historyListEl.querySelectorAll('div').forEach(el => el.remove());
-                noHistoryMsgEl.style.display = tradeHistory.length === 0 ? 'block' : 'none';
-                tradeHistory.slice().reverse().forEach(trade => {
+                const filteredHistory = tradeHistory.filter(trade => trade.assetIndex === assetIdx);
+                noHistoryMsgEl.style.display = filteredHistory.length === 0 ? 'block' : 'none';
+                filteredHistory.slice().reverse().forEach(trade => {
                     const pnlColor = trade.closedPnl >= 0 ? 'text-green-400' : 'text-red-400';
                     const bgColor = trade.closedPnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30';
                     const typeColor = trade.type === 'long' ? 'text-green-400' : 'text-red-400';
