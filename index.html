@@ -12,6 +12,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 
     <style>
+        @media (max-width: 640px) {
+            .mobile-stack {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                min-height: 0;
+            }
+            #chart-container {
+                flex: 1 1 auto;
+                max-height: 60vh;
+                height: 60vh;
+                min-height: 200px;
+            }
+            #account-panel {
+                flex: 0 0 auto;
+            }
+        }
         /* Custom font and dark theme styling */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         html, body {
@@ -58,7 +75,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
     <!-- Left Column: Chart -->
-    <div class="card rounded-lg p-4 shadow-lg flex flex-col flex-1 h-full">
+    <div class="card rounded-lg p-4 shadow-lg flex flex-col flex-1 h-full mobile-stack">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold">Chart</h2>
                 <button id="chart-toggle-btn" class="bg-gray-700 text-xs py-1 px-2 rounded transition-colors">Collapse</button>
@@ -108,9 +125,9 @@
                     <button id="account-toggle-btn" class="bg-gray-700 text-xs py-1 px-2 rounded transition-colors">Collapse</button>
                 </div>
                 <div id="account-summary-row" class="flex flex-row justify-between items-center space-x-4 text-sm mb-2">
-                    <div class="flex items-center space-x-2"><span class="font-semibold">Balance:</span> <span id="balance">$10,000.00</span></div>
-                    <div class="flex items-center space-x-2"><span class="font-semibold">Last P/L:</span> <span id="last-pl">$0.00</span></div>
-                    <div class="flex items-center space-x-2"><span class="font-semibold">P/L:</span> <span id="unrealized-pl">$0.00</span></div>
+                    <div class="flex flex-col items-center justify-center w-1/3"><span id="balance-label" class="font-semibold">Balance:</span> <span id="balance" class="inline-block w-24 text-center">$10,000.00</span></div>
+                    <div class="flex flex-col items-center justify-center w-1/3"><span id="last-pl-label" class="font-semibold">Last P/L:</span> <span id="last-pl" class="inline-block w-24 text-center">$0.00</span></div>
+                    <div class="flex flex-col items-center justify-center w-1/3"><span id="unrealized-pl-label" class="font-semibold">P/L:</span> <span id="unrealized-pl" class="inline-block w-24 text-center">$0.00</span></div>
                 </div>
                 <div id="account-trade-controls">
                     <div class="space-y-4">
@@ -144,9 +161,15 @@
 
         <!-- Full width positions panel below -->
         <div id="positions-panel" class="min-h-[150px] overflow-y-auto rounded-lg shadow-lg card p-4 col-span-1 lg:col-span-2">
-            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Open Positions</h2>
-            <div id="positions-list" class="space-y-2">
+            <div class="flex mb-4 border-b border-gray-700 pb-2">
+                <button id="open-tab-btn" class="flex-1 text-base font-medium py-2 rounded-t transition-colors bg-gray-800 text-gray-300 border-b-2 border-indigo-500 mr-1">Open Positions</button>
+                <button id="history-tab-btn" class="flex-1 text-base font-medium py-2 rounded-t transition-colors bg-gray-800 text-gray-300 border-b-2 border-transparent ml-1">History</button>
+            </div>
+            <div id="positions-list" class="space-y-2 overflow-y-auto" style="max-height: 200px;">
                 <p id="no-positions-msg" class="text-gray-400">No open positions.</p>
+            </div>
+            <div id="history-list" class="space-y-2 overflow-y-auto hidden" style="max-height: 200px;">
+                <p id="no-history-msg" class="text-gray-400">No trade history.</p>
             </div>
         </div>
         
@@ -190,12 +213,23 @@
             const tradeSizeRow = document.getElementById('trade-size-row');
             function setAccountPanelState(collapsed) {
                 accountPanelCollapsed = collapsed;
+                const balanceLabel = document.getElementById('balance-label');
+                const lastPlLabel = document.getElementById('last-pl-label');
+                const unrealizedPlLabel = document.getElementById('unrealized-pl-label');
                 if (accountPanelCollapsed) {
                     tradeSizeRow.style.display = 'none';
                     accountToggleBtn.textContent = 'Expand';
+                    // Hide all labels using Tailwind hidden class
+                    if (balanceLabel) balanceLabel.classList.add('hidden');
+                    if (lastPlLabel) lastPlLabel.classList.add('hidden');
+                    if (unrealizedPlLabel) unrealizedPlLabel.classList.add('hidden');
                 } else {
                     tradeSizeRow.style.display = '';
                     accountToggleBtn.textContent = 'Collapse';
+                    // Show all labels
+                    if (balanceLabel) balanceLabel.classList.remove('hidden');
+                    if (lastPlLabel) lastPlLabel.classList.remove('hidden');
+                    if (unrealizedPlLabel) unrealizedPlLabel.classList.remove('hidden');
                 }
             }
             accountToggleBtn.addEventListener('click', () => {
@@ -244,6 +278,7 @@
             // --- Game State ---
             let account = { balance: 10000, equity: 10000 };
             let openPositions = [];
+            let tradeHistory = [];
             let masterOneMinuteData = [];
             let lastPrice = 50000;
             let lastTime = new Date().getTime();
@@ -417,15 +452,70 @@
                 if (masterOneMinuteData.length > MAX_DATA_POINTS) masterOneMinuteData.shift();
 
                 let totalPnl = 0;
-                openPositions.forEach(pos => {
+                // Liquidation logic
+                // Get the latest candle
+                let latestCandle = masterOneMinuteData[masterOneMinuteData.length - 1];
+                for (let i = openPositions.length - 1; i >= 0; i--) {
+                    const pos = openPositions[i];
                     const priceDiff = lastPrice - pos.entryPrice;
                     const quantity = (pos.margin * pos.leverage) / pos.entryPrice;
                     pos.pnl = (pos.type === 'long') ? priceDiff * quantity : -priceDiff * quantity;
+                    // Calculate liquidation price
+                    let liquidationPrice;
+                    let wickLiquidated = false;
+                    if (pos.type === 'long') {
+                        liquidationPrice = pos.entryPrice - (pos.entryPrice / pos.leverage);
+                        // Liquidate if candle's low crosses liquidation price
+                        if (latestCandle.l <= liquidationPrice) {
+                            wickLiquidated = true;
+                        }
+                    } else {
+                        liquidationPrice = pos.entryPrice + (pos.entryPrice / pos.leverage);
+                        // Liquidate if candle's high crosses liquidation price
+                        if (latestCandle.h >= liquidationPrice) {
+                            wickLiquidated = true;
+                        }
+                    }
+                    if (wickLiquidated) {
+                        // Add to trade history
+                        tradeHistory.push({
+                            ...pos,
+                            closedPrice: liquidationPrice,
+                            closedPnl: -pos.margin, // Margin lost
+                            closedAt: new Date().getTime(),
+                            reason: 'Liquidated'
+                        });
+                        delete tradingChart.options.plugins.annotation.annotations[pos.id];
+                        delete tradingChart.options.plugins.annotation.annotations[pos.id + '_liq'];
+                        document.getElementById(pos.id)?.remove();
+                        openPositions.splice(i, 1);
+                        showMessage(`Liquidated ${pos.type.toUpperCase()} @ ${liquidationPrice.toFixed(2)} (wick). Margin lost.`, 'error');
+                        continue;
+                    }
                     totalPnl += pos.pnl;
-                });
+                }
                 account.equity = account.balance + totalPnl;
                 uiNeedsUpdate = true;
             }
+
+            // Helper: get active percent button value
+function getActivePercent() {
+    const btns = Array.from(sizePercentageButtonsEl.children);
+    for (const btn of btns) {
+        if (btn.classList.contains('bg-indigo-600')) {
+            return parseFloat(btn.dataset.percent);
+        }
+    }
+    return null;
+}
+
+// Update trade size input if percent button is active
+function updateTradeSizeFromPercent() {
+    const percent = getActivePercent();
+    if (percent !== null) {
+        tradeSizeInput.value = (account.balance * percent).toFixed(2);
+    }
+}
 
             function renderLoop() {
                 if (uiNeedsUpdate && masterOneMinuteData.length > 0) {
@@ -466,13 +556,26 @@
                     tradingChart.options.scales.x.min = firstVisibleCandleTime;
                     tradingChart.update('none');
 
-                    balanceEl.textContent = `$${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    // Abbreviate balance if account panel is collapsed
+                    if (accountPanelCollapsed) {
+                        balanceEl.textContent = abbreviateBalance(account.balance);
+                    } else {
+                        balanceEl.textContent = `$${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    }
+                    // Always update margin if percent button is active
+                    updateTradeSizeFromPercent();
+
+                    // Update live P/L (unrealized)
+                    const unrealizedPlEl = document.getElementById('unrealized-pl');
                     const totalPnl = account.equity - account.balance;
                     unrealizedPlEl.textContent = `$${totalPnl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                     unrealizedPlEl.style.color = totalPnl >= 0 ? '#4ade80' : '#f87171';
+
                     // Update last P/L (last closed position)
                     const lastPlEl = document.getElementById('last-pl');
-                    lastPlEl.textContent = `$${(window.lastClosedPl ?? 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    const lastClosedPl = window.lastClosedPl ?? 0;
+                    lastPlEl.textContent = `$${lastClosedPl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    lastPlEl.style.color = lastClosedPl >= 0 ? '#4ade80' : '#f87171';
 
                     updatePositionsList();
                     uiNeedsUpdate = false;
@@ -513,9 +616,26 @@
             // Timeframe is now managed by button clicks above
             sizePercentageButtonsEl.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.dataset.percent) {
-                    const percent = parseFloat(e.target.dataset.percent);
-                    const newSize = account.balance * percent;
-                    tradeSizeInput.value = newSize.toFixed(2);
+                    const btn = e.target;
+                    const isActive = btn.classList.contains('bg-indigo-600');
+                    if (isActive) {
+                        // Deselect if already active
+                        btn.classList.remove('bg-indigo-600', 'text-white');
+                        btn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                        tradeSizeInput.value = '';
+                    } else {
+                        // Select this button, deselect others
+                        Array.from(sizePercentageButtonsEl.children).forEach(b => {
+                            if (b === btn) {
+                                b.classList.add('bg-indigo-600', 'text-white');
+                                b.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                            } else {
+                                b.classList.remove('bg-indigo-600', 'text-white');
+                                b.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                            }
+                        });
+                        updateTradeSizeFromPercent();
+                    }
                 }
             });
 
@@ -543,6 +663,7 @@
                     entryPrice: lastPrice,
                     pnl: 0,
                 };
+                // Add entry price annotation
                 const annotation = {
                     type: 'line',
                     yMin: position.entryPrice,
@@ -558,6 +679,35 @@
                     }
                 };
                 tradingChart.options.plugins.annotation.annotations[position.id] = annotation;
+
+                // Calculate liquidation price (simple cross margin formula)
+                // For long: entryPrice - (entryPrice / leverage)
+                // For short: entryPrice + (entryPrice / leverage)
+                let liquidationPrice;
+                if (type === 'long') {
+                    liquidationPrice = position.entryPrice - (position.entryPrice / position.leverage);
+                } else {
+                    liquidationPrice = position.entryPrice + (position.entryPrice / position.leverage);
+                }
+                // Add amber dashed liquidation line annotation
+                tradingChart.options.plugins.annotation.annotations[position.id + '_liq'] = {
+                    type: 'line',
+                    yMin: liquidationPrice,
+                    yMax: liquidationPrice,
+                    borderColor: '#FFC107', // amber
+                    borderWidth: 1,
+                    borderDash: [4, 4],
+                    borderOpacity: 0.85,
+                    label: {
+                        content: `LIQUIDATION @ ${liquidationPrice.toFixed(2)}`,
+                        enabled: true,
+                        position: 'end',
+                        color: '#FFC107',
+                        backgroundColor: 'rgba(0,0,0,0.6)'
+                    },
+                    z: 9999
+                };
+
                 openPositions.push(position);
                 uiNeedsUpdate = true;
             }
@@ -568,13 +718,109 @@
                     account.balance += position.margin; // Return margin to balance
                     account.balance += position.pnl; // Add PnL
                     window.lastClosedPl = position.pnl; // Track last closed P/L
+                    // Add to trade history
+                    tradeHistory.push({
+                        ...position,
+                        closedPrice: lastPrice,
+                        closedPnl: position.pnl,
+                        closedAt: new Date().getTime(),
+                        reason: 'Closed'
+                    });
                     delete tradingChart.options.plugins.annotation.annotations[id];
+                    delete tradingChart.options.plugins.annotation.annotations[id + '_liq'];
                     document.getElementById(id)?.remove();
                     openPositions.splice(positionIndex, 1);
                     uiNeedsUpdate = true;
                 }
             }
             function updatePositionsList() { noPositionsMsgEl.style.display = openPositions.length === 0 ? 'block' : 'none'; openPositions.forEach(pos => { let posEl = document.getElementById(pos.id); if (!posEl) { posEl = document.createElement('div'); posEl.id = pos.id; posEl.innerHTML = `<span class="font-bold"></span><span></span><span></span><span></span><button class="close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded">Close</button>`; positionsListEl.appendChild(posEl); posEl.querySelector('.close-pos-btn').addEventListener('click', () => closePosition(pos.id)); } const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'; const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30'; const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400'; posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`; const fields = posEl.children; fields[0].className = `font-bold ${typeColor}`; fields[0].textContent = pos.type.toUpperCase(); fields[1].textContent = `$${pos.margin.toFixed(2)} (${pos.leverage}x)`; fields[2].textContent = pos.entryPrice.toFixed(2); fields[3].className = pnlColor; fields[3].textContent = pos.pnl.toFixed(2); }); }
+            function updatePositionsList() {
+                // Open positions
+                noPositionsMsgEl.style.display = openPositions.length === 0 ? 'block' : 'none';
+                function abbreviateNum(num) {
+                    if (num >= 1e9) return (num/1e9).toFixed(2) + 'B';
+                    if (num >= 1e6) return (num/1e6).toFixed(2) + 'M';
+                    if (num >= 1e3) return (num/1e3).toFixed(2) + 'K';
+                    return num.toFixed(2);
+                }
+                const isMobile = window.innerWidth <= 640;
+                openPositions.forEach(pos => {
+                    let posEl = document.getElementById(pos.id);
+                    if (!posEl) {
+                        posEl = document.createElement('div');
+                        posEl.id = pos.id;
+                        posEl.innerHTML = `<span class=\"font-bold\"></span><span></span><span></span><span></span><button class=\"close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded\">Close</button>`;
+                        positionsListEl.appendChild(posEl);
+                        posEl.querySelector('.close-pos-btn').addEventListener('click', () => closePosition(pos.id));
+                    }
+                    const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400';
+                    const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30';
+                    const typeColor = pos.type === 'long' ? 'text-green-400' : 'text-red-400';
+                    posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`;
+                    const fields = posEl.children;
+                    fields[0].className = `font-bold ${typeColor}`;
+                    fields[0].textContent = pos.type.toUpperCase();
+                    fields[1].textContent = isMobile ? `$${abbreviateNum(pos.margin)} (${pos.leverage}x)` : `$${pos.margin.toFixed(2)} (${pos.leverage}x)`;
+                    if (isMobile) {
+                        fields[2].innerHTML = `<span class='block text-xs text-gray-400'>Entry</span><span>${abbreviateNum(pos.entryPrice)}</span>`;
+                    } else {
+                        fields[2].textContent = pos.entryPrice.toFixed(2);
+                    }
+                    fields[3].className = pnlColor;
+                    if (isMobile) {
+                        fields[3].innerHTML = `<span class='block text-xs text-gray-400'>P/L</span><span>${abbreviateNum(pos.pnl)}</span>`;
+                    } else {
+                        fields[3].textContent = pos.pnl.toFixed(2);
+                    }
+                });
+                // Trade history
+                const historyListEl = document.getElementById('history-list');
+                const noHistoryMsgEl = document.getElementById('no-history-msg');
+                // Clear old history
+                historyListEl.querySelectorAll('div').forEach(el => el.remove());
+                noHistoryMsgEl.style.display = tradeHistory.length === 0 ? 'block' : 'none';
+                tradeHistory.slice().reverse().forEach(trade => {
+                    const pnlColor = trade.closedPnl >= 0 ? 'text-green-400' : 'text-red-400';
+                    const bgColor = trade.closedPnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30';
+                    const typeColor = trade.type === 'long' ? 'text-green-400' : 'text-red-400';
+                    const tradeEl = document.createElement('div');
+                    tradeEl.className = `grid grid-cols-6 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`;
+                    tradeEl.innerHTML = `
+                        <span class=\"font-bold ${typeColor}\">${trade.type.toUpperCase()}</span>
+                        <span>$${isMobile ? abbreviateNum(trade.margin) : trade.margin.toFixed(2)} (${trade.leverage}x)</span>
+                        <span>${isMobile ? `<span class='block text-xs text-gray-400'>Entry</span><span>${abbreviateNum(trade.entryPrice)}</span>` : trade.entryPrice.toFixed(2)}</span>
+                        <span>${isMobile ? `<span class='block text-xs text-gray-400'>Exit</span><span>${abbreviateNum(trade.closedPrice)}</span>` : trade.closedPrice.toFixed(2)}</span>
+                        <span class=\"${pnlColor}\">${isMobile ? `<span class='block text-xs text-gray-400'>P/L</span><span>${abbreviateNum(trade.closedPnl)}</span>` : trade.closedPnl.toFixed(2)}</span>
+                        <span class=\"text-xs text-gray-400\">${trade.reason}</span>
+                    `;
+                    historyListEl.appendChild(tradeEl);
+                });
+            }
+            // Tab switching logic
+            const openTabBtn = document.getElementById('open-tab-btn');
+            const historyTabBtn = document.getElementById('history-tab-btn');
+            const historyListEl = document.getElementById('history-list');
+            function setActiveTab(tab) {
+                if (tab === 'open') {
+                    openTabBtn.classList.add('border-indigo-500');
+                    openTabBtn.classList.remove('border-transparent');
+                    historyTabBtn.classList.remove('border-indigo-500');
+                    historyTabBtn.classList.add('border-transparent');
+                    positionsListEl.classList.remove('hidden');
+                    historyListEl.classList.add('hidden');
+                } else {
+                    historyTabBtn.classList.add('border-indigo-500');
+                    historyTabBtn.classList.remove('border-transparent');
+                    openTabBtn.classList.remove('border-indigo-500');
+                    openTabBtn.classList.add('border-transparent');
+                    positionsListEl.classList.add('hidden');
+                    historyListEl.classList.remove('hidden');
+                }
+            }
+            openTabBtn.addEventListener('click', () => setActiveTab('open'));
+            historyTabBtn.addEventListener('click', () => setActiveTab('history'));
+            // Set default tab on load
+            setActiveTab('open');
             function setGameSpeed(speed) {
                 speed = Math.min(10, speed);
                 if (gameLoopInterval) clearInterval(gameLoopInterval);
@@ -585,6 +831,13 @@
 
             init();
         });
+
+        // Abbreviate balance helper (moved outside renderLoop)
+function abbreviateBalance(balance) {
+    if (balance >= 1e6) return `$${(balance/1e6).toFixed(2)}M`;
+    if (balance >= 1e3) return `$${(balance/1e3).toFixed(2)}k`;
+    return `$${balance.toFixed(2)}`;
+}
     </script>
 </body>
 </html>
