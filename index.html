@@ -73,9 +73,9 @@
 </head>
 <body class="p-4">
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(280px,1fr)] gap-4 h-full w-full">
     <!-- Left Column: Chart -->
-    <div class="card rounded-lg p-4 shadow-lg flex flex-col flex-1 h-full mobile-stack">
+    <div class="card rounded-lg p-4 shadow-lg flex flex-col flex-1 h-full mobile-stack min-w-0 max-h-[calc(100vh-2rem)] overflow-auto">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold">Chart</h2>
                 <button id="chart-toggle-btn" class="bg-gray-700 text-xs py-1 px-2 rounded transition-colors">Collapse</button>
@@ -117,8 +117,8 @@
             </div>
         </div>
 
-        <!-- Right Column: Place Trade and Account -->
-        <div class="flex flex-col gap-4 h-full">
+    <!-- Right Column: Place Trade and Account -->
+    <div class="flex flex-col gap-4 h-full w-full lg:flex-[1_1_0] lg:min-w-[280px] lg:min-w-0">
             <div class="card rounded-lg p-4 shadow-lg flex-1 flex flex-col">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Account</h2>
@@ -132,8 +132,10 @@
                 <div id="account-trade-controls">
                     <div class="space-y-4">
                         <div id="trade-size-row">
-                            <label for="trade-size" class="block text-sm font-medium text-gray-300">Trade Size (Margin)</label>
-                            <input type="number" id="trade-size" value="100" class="w-full mt-1 bg-gray-800 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <div class="flex items-center gap-2">
+                                <label for="trade-size" class="text-sm font-medium text-gray-300">Trade Size (Margin)</label>
+                                <input type="text" inputmode="decimal" pattern="[0-9]*" id="trade-size" value="100" class="w-24 bg-[#181818] border border-gray-800 rounded-md p-2 text-gray-200 focus:ring-indigo-500 focus:border-indigo-500" style="appearance: none;">
+                            </div>
                         </div>
                         <div>
                             <div id="size-percentage-buttons" class="grid grid-cols-4 gap-2 mt-2">
@@ -154,26 +156,25 @@
                             <button id="long-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Long</button>
                             <button id="short-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Short</button>
                         </div>
+                        <!-- Positions and History Panel moved here -->
+                        <div id="positions-panel" class="min-h-[150px] overflow-y-auto rounded-lg shadow-lg card p-4 mt-4">
+                            <div class="flex mb-4 border-b border-gray-700 pb-2">
+                                <button id="open-tab-btn" class="flex-1 text-base font-medium py-2 rounded-t transition-colors bg-gray-800 text-gray-300 border-b-2 border-indigo-500 mr-1">Open Positions</button>
+                                <button id="history-tab-btn" class="flex-1 text-base font-medium py-2 rounded-t transition-colors bg-gray-800 text-gray-300 border-b-2 border-transparent ml-1">History</button>
+                            </div>
+                            <div id="positions-list" class="space-y-2 overflow-y-auto" style="max-height: 200px;">
+                                <p id="no-positions-msg" class="text-gray-400">No open positions.</p>
+                            </div>
+                            <div id="history-list" class="space-y-2 overflow-y-auto hidden" style="max-height: 200px;">
+                                <p id="no-history-msg" class="text-gray-400">No trade history.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Full width positions panel below -->
-        <div id="positions-panel" class="min-h-[150px] overflow-y-auto rounded-lg shadow-lg card p-4 col-span-1 lg:col-span-2">
-            <div class="flex mb-4 border-b border-gray-700 pb-2">
-                <button id="open-tab-btn" class="flex-1 text-base font-medium py-2 rounded-t transition-colors bg-gray-800 text-gray-300 border-b-2 border-indigo-500 mr-1">Open Positions</button>
-                <button id="history-tab-btn" class="flex-1 text-base font-medium py-2 rounded-t transition-colors bg-gray-800 text-gray-300 border-b-2 border-transparent ml-1">History</button>
-            </div>
-            <div id="positions-list" class="space-y-2 overflow-y-auto" style="max-height: 200px;">
-                <p id="no-positions-msg" class="text-gray-400">No open positions.</p>
-            </div>
-            <div id="history-list" class="space-y-2 overflow-y-auto hidden" style="max-height: 200px;">
-                <p id="no-history-msg" class="text-gray-400">No trade history.</p>
-            </div>
-        </div>
-        
-
+        <!-- ...existing code... -->
     </div>
 
     <div id="message-box" class="fixed top-5 right-5 bg-indigo-600 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 pointer-events-none z-50 transition-opacity duration-300 ease-in-out">
@@ -554,6 +555,12 @@ function updateTradeSizeFromPercent() {
                     const firstVisibleCandleTime = displayData[firstVisibleCandleIndex].x;
                     tradingChart.options.scales.x.max = lastCandleTime;
                     tradingChart.options.scales.x.min = firstVisibleCandleTime;
+                    // Set y-axis min/max based on visible candles only
+                    const visibleCandles = displayData.slice(firstVisibleCandleIndex);
+                    const yMin = Math.min(...visibleCandles.map(c => c.l));
+                    const yMax = Math.max(...visibleCandles.map(c => c.h));
+                    tradingChart.options.scales.y.min = yMin;
+                    tradingChart.options.scales.y.max = yMax;
                     tradingChart.update('none');
 
                     // Abbreviate balance if account panel is collapsed
