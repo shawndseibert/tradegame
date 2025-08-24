@@ -696,7 +696,7 @@ function updateTradeSizeFromPercent() {
                             closedPrice: asset.lastPrice,
                             closedPnl: pos.pnl,
                             closedAt: new Date().getTime(),
-                            reason: 'Closed (mobile)'
+                            reason: 'Closed'
                         });
                         account.balance += pos.margin + pos.pnl;
                         window.lastClosedPl = pos.pnl;
@@ -722,7 +722,7 @@ function updateTradeSizeFromPercent() {
                             closedPrice: asset.lastPrice,
                             closedPnl: pos.pnl,
                             closedAt: new Date().getTime(),
-                            reason: 'Closed (mobile)'
+                            reason: 'Closed'
                         });
                         account.balance += pos.margin + pos.pnl;
                         window.lastClosedPl = pos.pnl;
@@ -941,26 +941,23 @@ function updateTradeSizeFromPercent() {
                     posEl.innerHTML = `<span class=\"font-bold\"></span><span></span><span></span><span></span><button class=\"close-pos-btn bg-gray-600 hover:bg-gray-500 text-white text-xs py-1 px-2 rounded\">Close</button>`;
                     positionsListEl.appendChild(posEl);
                     posEl.querySelector('.close-pos-btn').addEventListener('click', () => {
-                        // Only close if position matches selected asset
-                        if (pos.assetIndex === selectedAssetIndex) {
-                            const asset = assets[selectedAssetIndex];
-                            tradeHistory.push({
-                                ...pos,
-                                closedPrice: asset.lastPrice,
-                                closedPnl: pos.pnl,
-                                closedAt: new Date().getTime(),
-                                reason: 'Closed'
-                            });
-                            account.balance += pos.margin + pos.pnl;
-                            window.lastClosedPl = pos.pnl;
-                            delete tradingChart.options.plugins.annotation.annotations[pos.id];
-                            delete tradingChart.options.plugins.annotation.annotations[pos.id + '_liq'];
-                            document.getElementById(pos.id)?.remove();
-                            const idx = openPositions.findIndex(p => p.id === pos.id);
-                            if (idx !== -1) openPositions.splice(idx, 1);
-                            showMessage(`Closed ${pos.type.toUpperCase()} @ ${asset.lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
-                            uiNeedsUpdate = true;
-                        }
+                        const asset = assets[pos.assetIndex];
+                        tradeHistory.push({
+                            ...pos,
+                            closedPrice: asset.lastPrice,
+                            closedPnl: pos.pnl,
+                            closedAt: new Date().getTime(),
+                            reason: 'Closed'
+                        });
+                        account.balance += pos.margin + pos.pnl;
+                        window.lastClosedPl = pos.pnl;
+                        delete tradingChart.options.plugins.annotation.annotations[pos.id];
+                        delete tradingChart.options.plugins.annotation.annotations[pos.id + '_liq'];
+                        document.getElementById(pos.id)?.remove();
+                        const idx = openPositions.findIndex(p => p.id === pos.id);
+                        if (idx !== -1) openPositions.splice(idx, 1);
+                        showMessage(`Closed ${pos.type.toUpperCase()} @ ${asset.lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
+                        uiNeedsUpdate = true;
                     });
                     const pnlColor = pos.pnl >= 0 ? 'text-green-400' : 'text-red-400';
                     const bgColor = pos.pnl >= 0 ? 'bg-green-900/30' : 'bg-red-900/30';
@@ -968,7 +965,13 @@ function updateTradeSizeFromPercent() {
                     posEl.className = `grid grid-cols-5 gap-2 items-center text-sm p-2 rounded-md ${bgColor}`;
                     const fields = posEl.children;
                     fields[0].className = `font-bold ${typeColor}`;
-                    fields[0].textContent = pos.type.toUpperCase();
+                    let statusText = '';
+                    if (tradeHistory.some(t => t.id === pos.id && t.reason === 'Liquidated')) {
+                        statusText = 'Liquidated';
+                    } else if (tradeHistory.some(t => t.id === pos.id && t.reason === 'Closed')) {
+                        statusText = 'Closed';
+                    }
+                    fields[0].innerHTML = `${pos.type.toUpperCase()}<br><span class='block text-xs text-gray-400'>${statusText}</span>`;
                     fields[1].textContent = isMobile ? `$${abbreviateNum(pos.margin)} (${pos.leverage}x)` : `$${pos.margin.toFixed(2)} (${pos.leverage}x)`;
                     if (isMobile) {
                         fields[2].innerHTML = `<span class='block text-xs text-gray-400'>Entry</span><span>${abbreviateNum(pos.entryPrice)}</span>`;
