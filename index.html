@@ -242,6 +242,7 @@
                 const lastPlLabel = document.getElementById('last-pl-label');
                 const unrealizedPlLabel = document.getElementById('unrealized-pl-label');
                 const positionsPanel = document.getElementById('positions-panel');
+                const isDesktop = window.innerWidth > 640;
                 if (accountPanelCollapsed) {
                     tradeSizeRow.style.display = 'none';
                     accountToggleBtn.textContent = 'Expand';
@@ -249,7 +250,8 @@
                     if (balanceLabel) balanceLabel.classList.add('hidden');
                     if (lastPlLabel) lastPlLabel.classList.add('hidden');
                     if (unrealizedPlLabel) unrealizedPlLabel.classList.add('hidden');
-                    if (positionsPanel) positionsPanel.style.display = 'none';
+                    // Only hide positionsPanel on mobile
+                    if (positionsPanel) positionsPanel.style.display = isDesktop ? '' : 'none';
                 } else {
                     tradeSizeRow.style.display = '';
                     accountToggleBtn.textContent = 'Collapse';
