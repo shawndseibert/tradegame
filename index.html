@@ -16,14 +16,22 @@
             .mobile-stack {
                 display: flex;
                 flex-direction: column;
-                height: auto;
+                height: 100%;
                 min-height: 0;
             }
             #chart-container {
                 flex: 1 1 auto;
-                max-height: 60vh;
-                height: 60vh;
-                min-height: 200px;
+                height: 100%;
+                min-height: 0;
+                max-height: none;
+                display: flex;
+                flex-direction: column;
+            }
+            #trading-chart {
+                flex: 1 1 auto;
+                height: 100% !important;
+                min-height: 0;
+                width: 100% !important;
             }
             #account-panel {
                 flex: 0 0 auto;
@@ -156,6 +164,11 @@
                             <button id="long-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Long</button>
                             <button id="short-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Short</button>
                         </div>
+                        <!-- Mobile-only Close Long/Short buttons -->
+                        <div class="grid grid-cols-2 gap-3 pt-2 sm:hidden">
+                            <button id="close-long-button" class="w-full bg-green-900 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">Close Long</button>
+                            <button id="close-short-button" class="w-full bg-red-900 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">Close Short</button>
+                        </div>
                         <!-- Positions and History Panel moved here -->
                         <div id="positions-panel" class="min-h-[150px] overflow-y-auto rounded-lg shadow-lg card p-4 mt-4">
                             <div class="flex mb-4 border-b border-gray-700 pb-2">
@@ -217,6 +230,7 @@
                 const balanceLabel = document.getElementById('balance-label');
                 const lastPlLabel = document.getElementById('last-pl-label');
                 const unrealizedPlLabel = document.getElementById('unrealized-pl-label');
+                const positionsPanel = document.getElementById('positions-panel');
                 if (accountPanelCollapsed) {
                     tradeSizeRow.style.display = 'none';
                     accountToggleBtn.textContent = 'Expand';
@@ -224,6 +238,7 @@
                     if (balanceLabel) balanceLabel.classList.add('hidden');
                     if (lastPlLabel) lastPlLabel.classList.add('hidden');
                     if (unrealizedPlLabel) unrealizedPlLabel.classList.add('hidden');
+                    if (positionsPanel) positionsPanel.style.display = 'none';
                 } else {
                     tradeSizeRow.style.display = '';
                     accountToggleBtn.textContent = 'Collapse';
@@ -231,6 +246,7 @@
                     if (balanceLabel) balanceLabel.classList.remove('hidden');
                     if (lastPlLabel) lastPlLabel.classList.remove('hidden');
                     if (unrealizedPlLabel) unrealizedPlLabel.classList.remove('hidden');
+                    if (positionsPanel) positionsPanel.style.display = '';
                 }
             }
             accountToggleBtn.addEventListener('click', () => {
@@ -600,6 +616,60 @@ function updateTradeSizeFromPercent() {
             }
 
             // --- Event Listeners ---
+            // Close Long/Short buttons (mobile)
+            const closeLongBtn = document.getElementById('close-long-button');
+            const closeShortBtn = document.getElementById('close-short-button');
+            if (closeLongBtn) {
+                closeLongBtn.addEventListener('click', () => {
+                    const firstLongIdx = openPositions.findIndex(pos => pos.type === 'long');
+                    if (firstLongIdx !== -1) {
+                        const pos = openPositions[firstLongIdx];
+                        // Close logic: add to history, update balance, remove annotation
+                        tradeHistory.push({
+                            ...pos,
+                            closedPrice: lastPrice,
+                            closedPnl: pos.pnl,
+                            closedAt: new Date().getTime(),
+                            reason: 'Closed (mobile)'
+                        });
+                        account.balance += pos.margin + pos.pnl;
+                        window.lastClosedPl = pos.pnl;
+                        delete tradingChart.options.plugins.annotation.annotations[pos.id];
+                        delete tradingChart.options.plugins.annotation.annotations[pos.id + '_liq'];
+                        document.getElementById(pos.id)?.remove();
+                        openPositions.splice(firstLongIdx, 1);
+                        showMessage(`Closed LONG @ ${lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
+                        uiNeedsUpdate = true;
+                    } else {
+                        showMessage('No open LONG positions to close.', 'error');
+                    }
+                });
+            }
+            if (closeShortBtn) {
+                closeShortBtn.addEventListener('click', () => {
+                    const firstShortIdx = openPositions.findIndex(pos => pos.type === 'short');
+                    if (firstShortIdx !== -1) {
+                        const pos = openPositions[firstShortIdx];
+                        tradeHistory.push({
+                            ...pos,
+                            closedPrice: lastPrice,
+                            closedPnl: pos.pnl,
+                            closedAt: new Date().getTime(),
+                            reason: 'Closed (mobile)'
+                        });
+                        account.balance += pos.margin + pos.pnl;
+                        window.lastClosedPl = pos.pnl;
+                        delete tradingChart.options.plugins.annotation.annotations[pos.id];
+                        delete tradingChart.options.plugins.annotation.annotations[pos.id + '_liq'];
+                        document.getElementById(pos.id)?.remove();
+                        openPositions.splice(firstShortIdx, 1);
+                        showMessage(`Closed SHORT @ ${lastPrice.toFixed(2)}. P/L: $${pos.pnl.toFixed(2)}`);
+                        uiNeedsUpdate = true;
+                    } else {
+                        showMessage('No open SHORT positions to close.', 'error');
+                    }
+                });
+            }
             leverageSlider.addEventListener('input', (e) => { leverageValueEl.textContent = `${e.target.value}x`; });
             speedSlider.addEventListener('input', (e) => {
                 let speed = parseInt(e.target.value, 10);
