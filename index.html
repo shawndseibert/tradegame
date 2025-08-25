@@ -632,6 +632,8 @@
                 if (touchTimer) clearTimeout(touchTimer);
             });
         function showEndGame() {
+            if (window.gameOver) return;
+            window.gameOver = true;
             // Gather stats
             const totalTrades = tradeHistory.length;
             const totalLongs = tradeHistory.filter(t => t.type === 'long').length;
@@ -1023,6 +1025,7 @@ function updateTradeSizeFromPercent() {
             setGameSpeed(1);
             document.getElementById('endgame-modal').classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
+                window.gameOver = false;
         };
                 const position = {
                     id: `pos-${Date.now()}`,
