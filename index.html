@@ -12,6 +12,64 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 
     <style>
+        /* Desktop: constrain right column height and enable scrolling */
+        @media (min-width: 641px) {
+            .right-panel {
+                max-height: calc(100vh - 2rem);
+                overflow-y: auto;
+                min-height: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            }
+        }
+        /* Mobile: let right column expand naturally */
+        @media (max-width: 640px) {
+            .right-panel {
+                max-height: none;
+                overflow-y: visible;
+            }
+        }
+        /* Mobile: show only 2 trades at a time in positions/history list */
+        @media (max-width: 640px) {
+            #positions-list, #history-list {
+                height: 112px;
+                max-height: 112px;
+            }
+        }
+        @media (min-width: 641px) {
+            #positions-list, #history-list {
+                height: 100%;
+                max-height: 100%;
+            }
+        }
+        /* Responsive positions list height */
+        #positions-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1 1 auto;
+            max-height: 100%;
+            /* Remove overflow-y-auto from here */
+        }
+        #positions-list, #history-list {
+            overflow-y: auto;
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: 100%;
+        }
+        @media (max-width: 640px) {
+            #positions-list, #history-list {
+                height: 112px; /* 2 trades at ~56px each, adjust as needed */
+                max-height: 112px;
+            }
+        }
+        @media (min-width: 641px) {
+            #positions-list, #history-list {
+                height: 100%;
+                max-height: 100%;
+            }
+        }
         @media (max-width: 640px) {
             .mobile-stack {
                 display: flex;
@@ -137,8 +195,8 @@
         </div>
 
     <!-- Right Column: Place Trade and Account -->
-    <div class="flex flex-col gap-4 h-full w-full lg:flex-[1_1_0] lg:min-w-[280px] lg:min-w-0">
-            <div class="card rounded-lg p-4 shadow-lg flex-1 flex flex-col">
+    <div class="right-panel flex flex-col gap-4 h-full w-full lg:flex-[1_1_0] lg:min-w-[280px] lg:min-w-0">
+            <div class="card rounded-lg p-4 shadow-lg flex-1 flex flex-col min-h-0">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Account</h2>
                     <button id="account-toggle-btn" class="bg-gray-700 text-xs py-1 px-2 rounded transition-colors">Collapse</button>
@@ -149,7 +207,7 @@
                     <div class="flex flex-col items-center justify-center w-1/3"><span id="unrealized-pl-label" class="font-semibold">P/L:</span> <span id="unrealized-pl" class="inline-block w-24 text-center">$0.00</span></div>
                 </div>
                 <div id="account-trade-controls">
-                    <div class="space-y-4">
+                    <div class="space-y-4 flex flex-col flex-1 min-h-0">
                         <div id="trade-size-row">
                             <div class="flex items-center gap-2">
                                 <label for="trade-size" class="text-sm font-medium text-gray-300">Trade Size (Margin)</label>
@@ -180,15 +238,15 @@
                             <button id="close-short-button" class="w-full bg-red-900 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">Close Short</button>
                         </div>
                         <!-- Positions and History Panel moved here -->
-                        <div id="positions-panel" class="min-h-[150px] overflow-y-auto rounded-lg shadow-lg card p-4 mt-4">
+                        <div id="positions-panel" class="flex flex-col min-h-0 overflow-y-auto rounded-lg shadow-lg card p-4 mt-4">
                             <div class="flex mb-4 border-b border-gray-700 pb-2">
                                 <button id="open-tab-btn" class="flex-1 text-base font-medium py-2 rounded-t transition-colors bg-gray-800 text-gray-300 border-b-2 border-indigo-500 mr-1">Open Positions</button>
                                 <button id="history-tab-btn" class="flex-1 text-base font-medium py-2 rounded-t transition-colors bg-gray-800 text-gray-300 border-b-2 border-transparent ml-1">History</button>
                             </div>
-                            <div id="positions-list" class="space-y-2 overflow-y-auto" style="max-height: 200px;">
+                            <div id="positions-list" class="space-y-2 overflow-y-auto flex-1 min-h-0" style="max-height: 100%;">
                                 <p id="no-positions-msg" class="text-gray-400">No open positions.</p>
                             </div>
-                            <div id="history-list" class="space-y-2 overflow-y-auto hidden" style="max-height: 200px;">
+                            <div id="history-list" class="space-y-2 overflow-y-auto hidden flex-1 min-h-0" style="max-height: 100%;">
                                 <p id="no-history-msg" class="text-gray-400">No trade history.</p>
                             </div>
                         </div>
@@ -289,15 +347,11 @@
             function updateCandleToggleBtn() {
                 if (candleType === 'candlestick') {
                     candleToggleBtn.textContent = 'CS';
-                    candleToggleBtn.classList.remove('bg-indigo-600', 'text-white');
-                    candleToggleBtn.classList.add('bg-gray-700', 'text-gray-200');
-                    candleToggleBtn.classList.add('hover:bg-gray-600');
                 } else {
                     candleToggleBtn.textContent = 'HA';
-                    candleToggleBtn.classList.add('bg-indigo-600', 'text-white');
-                    candleToggleBtn.classList.remove('bg-gray-700', 'text-gray-200');
-                    candleToggleBtn.classList.remove('hover:bg-gray-600');
                 }
+                candleToggleBtn.classList.remove('bg-indigo-600', 'text-white');
+                candleToggleBtn.classList.add('bg-gray-700', 'text-gray-200', 'hover:bg-gray-600');
             }
             updateCandleToggleBtn();
             candleToggleBtn.addEventListener('click', () => {
@@ -492,6 +546,24 @@
                 return aggregated;
             }
             
+            // End Game Modal logic
+            function showEndGame() {
+                // Gather stats
+                const totalTrades = tradeHistory.length;
+                const totalLongs = tradeHistory.filter(t => t.type === 'long').length;
+                const totalShorts = tradeHistory.filter(t => t.type === 'short').length;
+                const totalPL = tradeHistory.reduce((sum, t) => sum + (t.closedPnl || 0), 0);
+                const maxBalance = Math.max(...tradeHistory.map(t => t.balance || 10000), 10000);
+                const statsHtml = `
+                    <div class='mb-2'>Final Balance: <span class='text-red-400 font-bold'>$0.00</span></div>
+                    <div>Total Trades: <span class='font-bold'>${totalTrades}</span></div>
+                    <div>Longs: <span class='text-green-400 font-bold'>${totalLongs}</span> | Shorts: <span class='text-red-400 font-bold'>${totalShorts}</span></div>
+                    <div>Total P/L: <span class='font-bold ${totalPL >= 0 ? 'text-green-400' : 'text-red-400'}'>$${totalPL.toFixed(2)}</span></div>
+                `;
+                document.getElementById('endgame-stats').innerHTML = statsHtml;
+                document.getElementById('endgame-modal').classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
             // --- Game & Render Loops ---
             function gameLoop() {
                 masterOneMinuteData.push(generateOneMinuteCandle());
@@ -542,9 +614,9 @@
                 }
                 account.equity = account.balance + totalPnl;
                 // Show end game only if balance is zero and no open positions
-                if (account.balance <= 0.0001 && openPositions.length === 0) {
-                    showEndGame();
-                }
+                    if (account.balance <= 0.0001 && openPositions.length === 0) {
+                        showEndGame();
+                    }
                 uiNeedsUpdate = true;
             }
 
@@ -812,6 +884,8 @@ function updateTradeSizeFromPercent() {
             document.getElementById('endgame-stats').innerHTML = statsHtml;
             document.getElementById('endgame-modal').classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
+            // Freeze the game by stopping the game loop
+            if (gameLoopInterval) clearInterval(gameLoopInterval);
         }
         document.getElementById('play-again-btn').onclick = function() {
             // Set 1h timeframe button as default
@@ -853,6 +927,7 @@ function updateTradeSizeFromPercent() {
             const speedValueEl = document.getElementById('speed-value');
             if (speedSlider) speedSlider.value = 1;
             if (speedValueEl) speedValueEl.textContent = '1x';
+            // Resume the game loop
             setGameSpeed(1);
             document.getElementById('endgame-modal').classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
