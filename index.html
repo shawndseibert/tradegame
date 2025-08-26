@@ -12,6 +12,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 
     <style>
+    /* Info section text colors by pattern */
+    #info-hs-section { color: #eab308; }
+    #info-dt-section { color: #ef4444; }
+    #info-db-section { color: #22d3ee; }
+    #info-triangle-section { color: #a3e635; }
+    #info-flag-section { color: #3b82f6; }
+    #info-cup-section { color: #fbbf24; }
         /* Desktop: constrain right column height and enable scrolling */
         @media (min-width: 641px) {
             .right-panel {
@@ -29,6 +36,10 @@
                 max-height: none;
                 overflow-y: visible;
             }
+            /* Hide pattern title overlays on mobile */
+            .pattern-title {
+                display: none !important;
+            }
         }
         /* Mobile: show only 2 trades at a time in positions/history list */
         @media (max-width: 640px) {
@@ -37,6 +48,13 @@
                 max-height: 112px;
             }
         }
+        /* Info menu button colors by pattern */
+    .info-btn[data-info="hs"] { color: #eab308; }      /* Head & Shoulders: yellow */
+    .info-btn[data-info="dt"] { color: #ef4444; }      /* Double Top: red */
+    .info-btn[data-info="db"] { color: #22d3ee; }      /* Double Bottom: cyan */
+    .info-btn[data-info="triangle"] { color: #a3e635; }/* Triangle: lime */
+    .info-btn[data-info="flag"] { color: #3b82f6; }    /* Flag: blue */
+    .info-btn[data-info="cup"] { color: #fbbf24; }     /* Cup & Handle: amber */
         @media (min-width: 641px) {
             #positions-list, #history-list {
                 height: 100%;
@@ -156,6 +174,7 @@
     <div id="dev-menu" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 z-50 flex items-center justify-center hidden">
         <div class="bg-gray-900 rounded-lg shadow-2xl p-8 w-[350px] flex flex-col items-center border-4 border-indigo-500">
             <h2 class="text-2xl font-bold text-indigo-400 mb-4">Developer Menu</h2>
+            <button id="dev-bot-btn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded mb-4 w-full">Toggle Bot</button>
             <button id="dev-newgame-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded mb-4 w-full">New Game</button>
             <button id="dev-close-btn" class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded w-full">Close</button>
             <p class="mt-6 text-xs text-gray-400">Press <span class="font-bold text-indigo-300">`</span> to toggle</p>
@@ -326,7 +345,6 @@
                 dt: document.getElementById('info-dt-section'),
                 db: document.getElementById('info-db-section'),
                 triangle: document.getElementById('info-triangle-section'),
-                flag: document.getElementById('info-flag-section'),
                 cup: document.getElementById('info-cup-section')
             };
             const infoToggleState = {
@@ -385,17 +403,19 @@
                 // Example shapes, placed using the newest candles
                 const annotations = {};
                 const data = tradingChart?.data?.datasets[0]?.data || [];
-                // Minimum candle requirements for each pattern
+                // Dynamically scale candle requirements by timeframe
+                const tf = window.currentTimeframe || 1;
+                // Use more candles for higher timeframes
                 const minCandles = {
-                    hs: 9,
-                    dt: 7,
-                    db: 7,
-                    triangle: 7,
-                    flag: 9,
-                    cup: 9
+                    hs: Math.max(9, tf * 3),
+                    dt: Math.max(7, tf * 2),
+                    db: Math.max(7, tf * 2),
+                    triangle: Math.max(7, tf * 2),
+                    flag: Math.max(9, tf * 3),
+                    cup: Math.max(9, tf * 4)
                 };
                 // Use the last N candles for overlays
-                const N = 9;
+                const N = Math.max(9, tf * 4);
                 const start = Math.max(0, data.length - N);
                 // Helper to get x/y
                 function xy(idx, relY) {
@@ -465,11 +485,11 @@
                     const avg = sma(closes, 5);
                     if (ls < h && rs < h && h > l && h > r && Math.abs(ls-rs)<0.03*avg) {
                         return {
-                            hs: {type:'line', xMin:xy(-6,0).x, xMax:xy(6,0).x, yMin:l, yMax:r, borderColor:'orange', borderWidth:2, label:{display:true,content:'H&S',position:'start',color:'orange'}},
-                            hsL: {type:'line', xMin:xy(-6,0).x, xMax:xy(-4,1).x, yMin:l, yMax:ls, borderColor:'orange', borderWidth:2},
-                            hsR: {type:'line', xMin:xy(4,1).x, xMax:xy(6,0).x, yMin:rs, yMax:r, borderColor:'orange', borderWidth:2},
-                            hsHead: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,-1).x, yMin:ls, yMax:h, borderColor:'orange', borderWidth:2},
-                            hsHeadR: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,1).x, yMin:h, yMax:rs, borderColor:'orange', borderWidth:2}
+                            hs: {type:'line', xMin:xy(-6,0).x, xMax:xy(6,0).x, yMin:l, yMax:r, borderColor:'orange', borderWidth:4, label:{display:false,content:'H&S',position:'start',color:'orange'}},
+                            hsL: {type:'line', xMin:xy(-6,0).x, xMax:xy(-4,1).x, yMin:l, yMax:ls, borderColor:'orange', borderWidth:4},
+                            hsR: {type:'line', xMin:xy(4,1).x, xMax:xy(6,0).x, yMin:rs, yMax:r, borderColor:'orange', borderWidth:4},
+                            hsHead: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,-1).x, yMin:ls, yMax:h, borderColor:'orange', borderWidth:4},
+                            hsHeadR: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,1).x, yMin:h, yMax:rs, borderColor:'orange', borderWidth:4}
                         };
                     }
                     return {};
@@ -485,8 +505,8 @@
                     const avg = sma(closes, 5);
                     if (Math.abs(p1-p2)<0.01*avg && dip < p1 && dip < p2) {
                         return {
-                            dt1: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,1).x, yMin:p1, yMax:p1, borderColor:'red', borderWidth:2, label:{display:true,content:'DT',color:'red'}},
-                            dt2: {type:'line', xMin:xy(0,1).x, xMax:xy(4,1).x, yMin:p2, yMax:p2, borderColor:'red', borderWidth:2}
+                            dt1: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,1).x, yMin:p1, yMax:p1, borderColor:'red', borderWidth:4, label:{display:false,content:'DT',color:'red'}},
+                            dt2: {type:'line', xMin:xy(0,1).x, xMax:xy(4,1).x, yMin:p2, yMax:p2, borderColor:'red', borderWidth:4}
                         };
                     }
                     return {};
@@ -502,8 +522,8 @@
                     const avg = sma(closes, 5);
                     if (Math.abs(t1-t2)<0.01*avg && peak > t1 && peak > t2) {
                         return {
-                            db1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(0,-1).x, yMin:t1, yMax:t1, borderColor:'green', borderWidth:2, label:{display:true,content:'DB',color:'green'}},
-                            db2: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,-1).x, yMin:t2, yMax:t2, borderColor:'green', borderWidth:2}
+                            db1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(0,-1).x, yMin:t1, yMax:t1, borderColor:'green', borderWidth:4, label:{display:false,content:'DB',color:'green'}},
+                            db2: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,-1).x, yMin:t2, yMax:t2, borderColor:'green', borderWidth:4}
                         };
                     }
                     return {};
@@ -519,8 +539,8 @@
                     const low1 = xy(-4,-1).y, low2 = xy(4,-1).y, high1 = xy(-4,1).y, high2 = xy(4,1).y;
                     if (high1 > high2 && low1 < low2) {
                         return {
-                            tri1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(4,1).x, yMin:low1, yMax:high2, borderColor:'yellow', borderWidth:2, label:{display:true,content:'Triangle',color:'yellow'}},
-                            tri2: {type:'line', xMin:xy(-4,1).x, xMax:xy(4,-1).x, yMin:high1, yMax:low2, borderColor:'yellow', borderWidth:2}
+                            tri1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(4,1).x, yMin:low1, yMax:high2, borderColor:'yellow', borderWidth:4, label:{display:false,content:'Triangle',color:'yellow'}},
+                            tri2: {type:'line', xMin:xy(-4,1).x, xMax:xy(4,-1).x, yMin:high1, yMax:low2, borderColor:'yellow', borderWidth:4}
                         };
                     }
                     return {};
@@ -534,9 +554,9 @@
                     const cons = Math.max(...closes.slice(4)) - Math.min(...closes.slice(4));
                     if (move > 2 * cons) {
                         return {
-                            flag1: {type:'line', xMin:xy(-4,0).x, xMax:xy(-2,1).x, yMin:xy(-4,0).y, yMax:xy(-2,1).y, borderColor:'blue', borderWidth:2, label:{display:true,content:'Flag',color:'blue'}},
-                            flag2: {type:'line', xMin:xy(-2,1).x, xMax:xy(2,-1).x, yMin:xy(-2,1).y, yMax:xy(2,-1).y, borderColor:'blue', borderWidth:2},
-                            flag3: {type:'line', xMin:xy(2,-1).x, xMax:xy(4,0).x, yMin:xy(2,-1).y, yMax:xy(4,0).y, borderColor:'blue', borderWidth:2}
+                            flag1: {type:'line', xMin:xy(-4,0).x, xMax:xy(-2,1).x, yMin:xy(-4,0).y, yMax:xy(-2,1).y, borderColor:'blue', borderWidth:4, label:{display:false,content:'Flag',color:'blue'}},
+                            flag2: {type:'line', xMin:xy(-2,1).x, xMax:xy(2,-1).x, yMin:xy(-2,1).y, yMax:xy(2,-1).y, borderColor:'blue', borderWidth:4},
+                            flag3: {type:'line', xMin:xy(2,-1).x, xMax:xy(4,0).x, yMin:xy(2,-1).y, yMax:xy(4,0).y, borderColor:'blue', borderWidth:4}
                         };
                     }
                     return {};
@@ -552,8 +572,8 @@
                     const avg = sma(closes, 7);
                     if (mid < left && mid < right && Math.abs(left-right)<0.05*avg) {
                         return {
-                            cup: {type:'line', xMin:xy(-6,-1).x, xMax:xy(0,-1).x, yMin:left, yMax:mid, borderColor:'purple', borderWidth:2, label:{display:true,content:'Cup',color:'purple'}},
-                            handle: {type:'line', xMin:xy(0,-1).x, xMax:xy(6,0).x, yMin:mid, yMax:right, borderColor:'purple', borderWidth:2, label:{display:true,content:'Handle',color:'purple'}}
+                            cup: {type:'line', xMin:xy(-6,-1).x, xMax:xy(0,-1).x, yMin:left, yMax:mid, borderColor:'purple', borderWidth:4, label:{display:false,content:'Cup',color:'purple'}},
+                            handle: {type:'line', xMin:xy(0,-1).x, xMax:xy(6,0).x, yMin:mid, yMax:right, borderColor:'purple', borderWidth:4, label:{display:false,content:'Handle',color:'purple'}}
                         };
                     }
                     return {};
