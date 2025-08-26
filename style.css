@@ -1,0 +1,152 @@
+    /* Info section text colors by pattern */
+    #info-hs-section { color: #eab308; }
+    #info-dt-section { color: #ef4444; }
+    #info-db-section { color: #22d3ee; }
+    #info-triangle-section { color: #a3e635; }
+    #info-flag-section { color: #3b82f6; }
+    #info-cup-section { color: #fbbf24; }
+        /* Desktop: constrain right column height and enable scrolling */
+        @media (min-width: 641px) {
+            .right-panel {
+                max-height: calc(100vh - 2rem);
+                overflow-y: auto;
+                min-height: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            }
+        }
+        /* Mobile: let right column expand naturally */
+        @media (max-width: 640px) {
+            .right-panel {
+                max-height: none;
+                overflow-y: visible;
+            }
+            /* Hide pattern title overlays on mobile */
+            .pattern-title {
+                display: none !important;
+            }
+        }
+        /* Mobile: show only 2 trades at a time in positions/history list */
+        @media (max-width: 640px) {
+            #positions-list, #history-list {
+                height: 112px;
+                max-height: 112px;
+            }
+        }
+        /* Info menu button colors by pattern */
+    .info-btn[data-info="hs"] { color: #eab308; }      /* Head & Shoulders: yellow */
+    .info-btn[data-info="dt"] { color: #ef4444; }      /* Double Top: red */
+    .info-btn[data-info="db"] { color: #22d3ee; }      /* Double Bottom: cyan */
+    .info-btn[data-info="triangle"] { color: #a3e635; }/* Triangle: lime */
+    .info-btn[data-info="flag"] { color: #3b82f6; }    /* Flag: blue */
+    .info-btn[data-info="cup"] { color: #fbbf24; }     /* Cup & Handle: amber */
+        @media (min-width: 641px) {
+            #positions-list, #history-list {
+                height: 100%;
+                max-height: 100%;
+            }
+        }
+        /* Responsive positions list height */
+        #positions-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1 1 auto;
+            max-height: 100%;
+            /* Remove overflow-y-auto from here */
+        }
+        #positions-list, #history-list {
+            overflow-y: auto;
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: 100%;
+        }
+        @media (max-width: 640px) {
+            #positions-list, #history-list {
+                height: 112px; /* 2 trades at ~56px each, adjust as needed */
+                max-height: 112px;
+            }
+        }
+        @media (min-width: 641px) {
+            #positions-list, #history-list {
+                height: 100%;
+                max-height: 100%;
+            }
+        }
+        @media (max-width: 640px) {
+            .mobile-stack {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                min-height: 0;
+            }
+            #chart-container {
+                flex: 1 1 auto;
+                height: 100%;
+                min-height: 0;
+                max-height: none;
+                display: flex;
+                flex-direction: column;
+            }
+            #trading-chart {
+                flex: 1 1 auto;
+                height: 100% !important;
+                min-height: 0;
+                width: 100% !important;
+            }
+            #account-panel {
+                flex: 0 0 auto;
+            }
+        }
+        /* Custom font and dark theme styling */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        html, body {
+            height: 100%;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+        }
+        .card {
+            background-color: #1E1E1E;
+            border: 1px solid #333;
+        }
+        #chart-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        #trading-chart {
+            flex: 1 1 auto;
+            height: 100% !important;
+            min-height: 0;
+            width: 100% !important;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4F46E5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4F46E5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+            /* Prevent text selection on all elements */
+            * {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
