@@ -180,6 +180,8 @@
                         <button class="bg-gray-700 text-xs py-1 rounded transition-colors timeframe-btn" data-timeframe="15">15m</button>
                         <button class="bg-gray-700 text-xs py-1 rounded transition-colors timeframe-btn" data-timeframe="60">1h</button>
                     </div>
+                    <!-- Pattern Overlay Toggles Panel -->
+                    <!-- Pattern overlay buttons removed; overlays now controlled by info modal toggles -->
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <!-- Candle type dropdown removed, replaced by toggle buttons above -->
@@ -194,14 +196,40 @@
                 </div>
             </div>
             <div id="chart-container" class="mt-6 rounded-lg shadow-lg card p-2 min-h-[300px] flex-1">
-                <!-- Overlay Auto, (-), and (+) buttons (swapped) -->
-                                <!-- Overlay Auto, (-), and (+) buttons (swapped) -->
-                                <div class="absolute left-1/2 top-2 -translate-x-1/2 z-10 flex items-center gap-2">
-                                    <button id="minus-btn" class="px-3 py-1 text-xs font-semibold rounded-md bg-gray-900 bg-opacity-70 text-gray-200 shadow-md hover:bg-opacity-90 transition-all" style="pointer-events:auto;">-</button>
-                                    <button id="reset-view-btn" class="px-3 py-1 text-xs font-semibold rounded-md bg-gray-900 bg-opacity-70 text-gray-200 shadow-md hover:bg-opacity-90 transition-all" style="pointer-events:auto;">Auto</button>
-                                    <button id="plus-btn" class="px-3 py-1 text-xs font-semibold rounded-md bg-gray-900 bg-opacity-70 text-gray-200 shadow-md hover:bg-opacity-90 transition-all" style="pointer-events:auto;">+</button>
-                                </div>
+                <!-- Overlay Auto, (-), (+), and Info buttons -->
+                <div class="absolute left-1/2 top-2 -translate-x-1/2 z-10 flex items-center gap-2">
+                    <button id="minus-btn" class="px-3 py-1 text-xs font-semibold rounded-md bg-gray-900 bg-opacity-70 text-gray-200 shadow-md hover:bg-opacity-90 transition-all" style="pointer-events:auto;">-</button>
+                    <button id="reset-view-btn" class="px-3 py-1 text-xs font-semibold rounded-md bg-gray-900 bg-opacity-70 text-gray-200 shadow-md hover:bg-opacity-90 transition-all" style="pointer-events:auto;">Auto</button>
+                    <button id="plus-btn" class="px-3 py-1 text-xs font-semibold rounded-md bg-gray-900 bg-opacity-70 text-gray-200 shadow-md hover:bg-opacity-90 transition-all" style="pointer-events:auto;">+</button>
+                    <button id="info-patterns-btn" title="Trading Patterns Info" class="px-2 py-1 text-xs font-semibold rounded-full bg-indigo-700 bg-opacity-80 text-white shadow-md hover:bg-opacity-100 transition-all flex items-center" style="pointer-events:auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path stroke="currentColor" stroke-width="2" d="M12 16v-4m0-4h.01"/></svg>
+                        Info
+                    </button>
+                </div>
                 <canvas id="trading-chart"></canvas>
+                <!-- Trading Patterns Info Modal -->
+                <div id="patterns-info-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
+                    <div class="bg-[#181818] border-2 border-indigo-600 rounded-xl shadow-2xl p-8 max-w-lg w-full text-left relative">
+                        <button id="close-patterns-info" class="absolute top-2 right-2 text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+                        <h2 class="text-2xl font-bold text-indigo-400 mb-4">Common Trading Patterns</h2>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button id="info-hs-btn" class="bg-gray-700 text-xs py-1 rounded transition-colors info-btn" data-info="hs">Head & Shoulders</button>
+                            <button id="info-dt-btn" class="bg-gray-700 text-xs py-1 rounded transition-colors info-btn" data-info="dt">Double Top</button>
+                            <button id="info-db-btn" class="bg-gray-700 text-xs py-1 rounded transition-colors info-btn" data-info="db">Double Bottom</button>
+                            <button id="info-triangle-btn" class="bg-gray-700 text-xs py-1 rounded transition-colors info-btn" data-info="triangle">Triangle</button>
+                            <button id="info-flag-btn" class="bg-gray-700 text-xs py-1 rounded transition-colors info-btn" data-info="flag">Flag/Pennant</button>
+                            <button id="info-cup-btn" class="bg-gray-700 text-xs py-1 rounded transition-colors info-btn" data-info="cup">Cup & Handle</button>
+                        </div>
+                        <div id="info-sections" class="space-y-4 text-gray-200 text-sm">
+                            <div id="info-hs-section" class="hidden"><strong>Head and Shoulders:</strong> A reversal pattern with three peaks, the middle being the highest. Indicates a trend change from bullish to bearish.</div>
+                            <div id="info-dt-section" class="hidden"><strong>Double Top:</strong> Two consecutive peaks at roughly the same price level, signaling a potential bearish reversal.</div>
+                            <div id="info-db-section" class="hidden"><strong>Double Bottom:</strong> Two consecutive troughs at roughly the same price level, signaling a potential bullish reversal.</div>
+                            <div id="info-triangle-section" class="hidden"><strong>Triangle (Ascending/Descending/Symmetrical):</strong> Price consolidates in a triangle shape, often leading to a breakout.</div>
+                            <div id="info-flag-section" class="hidden"><strong>Flag & Pennant:</strong> Short-term continuation patterns that resemble a flag or pennant after a sharp price move.</div>
+                            <div id="info-cup-section" class="hidden"><strong>Cup and Handle:</strong> A rounded bottom followed by a small consolidation, often leading to a bullish breakout.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -283,7 +311,322 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
+            // Info modal pattern section toggles
+            const infoBtnEls = {
+                hs: document.getElementById('info-hs-btn'),
+                dt: document.getElementById('info-dt-btn'),
+                db: document.getElementById('info-db-btn'),
+                triangle: document.getElementById('info-triangle-btn'),
+                flag: document.getElementById('info-flag-btn'),
+                cup: document.getElementById('info-cup-btn')
+            };
+            const infoSectionEls = {
+                hs: document.getElementById('info-hs-section'),
+                dt: document.getElementById('info-dt-section'),
+                db: document.getElementById('info-db-section'),
+                triangle: document.getElementById('info-triangle-section'),
+                flag: document.getElementById('info-flag-section'),
+                cup: document.getElementById('info-cup-section')
+            };
+            const infoToggleState = {
+                hs: false,
+                dt: false,
+                db: false,
+                triangle: false,
+                flag: false,
+                cup: false
+            };
+            Object.entries(infoBtnEls).forEach(([key, btn]) => {
+                btn.addEventListener('click', () => {
+                    infoToggleState[key] = !infoToggleState[key];
+                    patternToggles[key] = infoToggleState[key]; // Sync chart overlay toggle
+                    updateInfoBtnStyles();
+                    updateInfoSections();
+                    updatePatternBtnStyles();
+                    updatePatternOverlays();
+                });
+            });
+            function updateInfoBtnStyles() {
+                Object.entries(infoBtnEls).forEach(([key, btn]) => {
+                    if (infoToggleState[key]) {
+                        btn.classList.add('bg-indigo-600', 'text-white');
+                        btn.classList.remove('bg-gray-700', 'text-gray-200', 'hover:bg-gray-600');
+                    } else {
+                        btn.classList.remove('bg-indigo-600', 'text-white');
+                        btn.classList.add('bg-gray-700', 'text-gray-200', 'hover:bg-gray-600');
+                    }
+                });
+            }
+            function updateInfoSections() {
+                Object.entries(infoSectionEls).forEach(([key, section]) => {
+                    section.classList.toggle('hidden', !infoToggleState[key]);
+                });
+            }
+            updateInfoBtnStyles();
+            updateInfoSections();
+            // --- Pattern Overlay Logic ---
+            // Pattern toggle state, now only controlled by info modal
+            const patternToggles = {
+                hs: false,
+                dt: false,
+                db: false,
+                triangle: false,
+                flag: false,
+                cup: false
+            };
+            function updatePatternBtnStyles() { /* No-op, buttons removed */ }
+
+            // Persist overlays for several candles
+            const PATTERN_HOLD_CANDLES = 7;
+            let patternOverlayCache = {};
+            let patternOverlayAge = {};
+            function getPatternAnnotations() {
+                // Example shapes, placed using the newest candles
+                const annotations = {};
+                const data = tradingChart?.data?.datasets[0]?.data || [];
+                // Minimum candle requirements for each pattern
+                const minCandles = {
+                    hs: 9,
+                    dt: 7,
+                    db: 7,
+                    triangle: 7,
+                    flag: 9,
+                    cup: 9
+                };
+                // Use the last N candles for overlays
+                const N = 9;
+                const start = Math.max(0, data.length - N);
+                // Helper to get x/y
+                function xy(idx, relY) {
+                    const i = start + idx;
+                    const candle = data[i];
+                    if (!candle) return {x: null, y: null};
+                    let y = candle.c;
+                    if (relY === 1) y = candle.h;
+                    if (relY === -1) y = candle.l;
+                    return {x: candle.x, y};
+                }
+                // Helper: simple moving average
+                function sma(arr, n) {
+                    if (arr.length < n) return null;
+                    return arr.slice(-n).reduce((a,b) => a+b,0)/n;
+                }
+                // Helper: check uptrend/downtrend
+                function isUptrend(arr, n) {
+                    if (arr.length < n) return false;
+                    return arr[arr.length-1] > arr[arr.length-n];
+                }
+                function isDowntrend(arr, n) {
+                    if (arr.length < n) return false;
+                    return arr[arr.length-1] < arr[arr.length-n];
+                }
+                // For each pattern, check if toggled and either recalculate or use cache
+                // Refined sticky overlays: keep showing last true result until price action drifts far from detection
+                function cacheOrCalc(key, calcFn) {
+                    if (!patternToggles[key] || data.length < minCandles[key]) {
+                        delete patternOverlayCache[key];
+                        return;
+                    }
+                    const detected = calcFn();
+                    const hasPattern = Object.keys(detected).length > 0;
+                    // If new pattern detected, update cache
+                    if (hasPattern) {
+                        patternOverlayCache[key] = detected;
+                        patternOverlayCache[key]._refCandle = data[data.length-1]; // Save reference to last candle
+                    }
+                    // If cache exists, check for drift
+                    if (patternOverlayCache[key]) {
+                        // If pattern is still present, show overlay
+                        if (hasPattern) {
+                            Object.assign(annotations, patternOverlayCache[key]);
+                        } else {
+                            // If price hasn't moved far, keep overlay
+                            const ref = patternOverlayCache[key]._refCandle;
+                            const curr = data[data.length-1];
+                            if (ref && curr && Math.abs(curr.c - ref.c) < 0.03 * ref.c) {
+                                Object.assign(annotations, patternOverlayCache[key]);
+                            } else {
+                                delete patternOverlayCache[key];
+                            }
+                        }
+                    }
+                }
+                // Head & Shoulders
+                cacheOrCalc('hs', () => {
+                    // Use 13 candles for context
+                    if (data.length < 13) return {};
+                    const closes = data.slice(start-4, start+9).map(c=>c.c);
+                    // Require uptrend before pattern
+                    if (!isUptrend(closes, 7)) return {};
+                    // Shoulders and head
+                    const l = xy(-6,0).y, ls = xy(-4,1).y, h = xy(0,-1).y, rs = xy(4,1).y, r = xy(6,0).y;
+                    // Smoothing with SMA
+                    const avg = sma(closes, 5);
+                    if (ls < h && rs < h && h > l && h > r && Math.abs(ls-rs)<0.03*avg) {
+                        return {
+                            hs: {type:'line', xMin:xy(-6,0).x, xMax:xy(6,0).x, yMin:l, yMax:r, borderColor:'orange', borderWidth:2, label:{display:true,content:'H&S',position:'start',color:'orange'}},
+                            hsL: {type:'line', xMin:xy(-6,0).x, xMax:xy(-4,1).x, yMin:l, yMax:ls, borderColor:'orange', borderWidth:2},
+                            hsR: {type:'line', xMin:xy(4,1).x, xMax:xy(6,0).x, yMin:rs, yMax:r, borderColor:'orange', borderWidth:2},
+                            hsHead: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,-1).x, yMin:ls, yMax:h, borderColor:'orange', borderWidth:2},
+                            hsHeadR: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,1).x, yMin:h, yMax:rs, borderColor:'orange', borderWidth:2}
+                        };
+                    }
+                    return {};
+                });
+                // Double Top
+                cacheOrCalc('dt', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-2, start+7).map(c=>c.c);
+                    // Require uptrend before pattern
+                    if (!isUptrend(closes, 5)) return {};
+                    // Two peaks separated by dip
+                    const p1 = xy(-4,1).y, dip = xy(0,0).y, p2 = xy(4,1).y;
+                    const avg = sma(closes, 5);
+                    if (Math.abs(p1-p2)<0.01*avg && dip < p1 && dip < p2) {
+                        return {
+                            dt1: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,1).x, yMin:p1, yMax:p1, borderColor:'red', borderWidth:2, label:{display:true,content:'DT',color:'red'}},
+                            dt2: {type:'line', xMin:xy(0,1).x, xMax:xy(4,1).x, yMin:p2, yMax:p2, borderColor:'red', borderWidth:2}
+                        };
+                    }
+                    return {};
+                });
+                // Double Bottom
+                cacheOrCalc('db', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-2, start+7).map(c=>c.c);
+                    // Require downtrend before pattern
+                    if (!isDowntrend(closes, 5)) return {};
+                    // Two troughs separated by peak
+                    const t1 = xy(-4,-1).y, peak = xy(0,0).y, t2 = xy(4,-1).y;
+                    const avg = sma(closes, 5);
+                    if (Math.abs(t1-t2)<0.01*avg && peak > t1 && peak > t2) {
+                        return {
+                            db1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(0,-1).x, yMin:t1, yMax:t1, borderColor:'green', borderWidth:2, label:{display:true,content:'DB',color:'green'}},
+                            db2: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,-1).x, yMin:t2, yMax:t2, borderColor:'green', borderWidth:2}
+                        };
+                    }
+                    return {};
+                });
+                // Triangle
+                cacheOrCalc('triangle', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-2, start+7).map(c=>c.c);
+                    // Require consolidation (low volatility)
+                    const max = Math.max(...closes), min = Math.min(...closes);
+                    if ((max-min)/min < 0.05) return {};
+                    // Converging highs and lows
+                    const low1 = xy(-4,-1).y, low2 = xy(4,-1).y, high1 = xy(-4,1).y, high2 = xy(4,1).y;
+                    if (high1 > high2 && low1 < low2) {
+                        return {
+                            tri1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(4,1).x, yMin:low1, yMax:high2, borderColor:'yellow', borderWidth:2, label:{display:true,content:'Triangle',color:'yellow'}},
+                            tri2: {type:'line', xMin:xy(-4,1).x, xMax:xy(4,-1).x, yMin:high1, yMax:low2, borderColor:'yellow', borderWidth:2}
+                        };
+                    }
+                    return {};
+                });
+                // Flag/Pennant
+                cacheOrCalc('flag', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-4, start+5).map(c=>c.c);
+                    // Require sharp move (trend) then consolidation
+                    const move = Math.abs(closes[0] - closes[4]);
+                    const cons = Math.max(...closes.slice(4)) - Math.min(...closes.slice(4));
+                    if (move > 2 * cons) {
+                        return {
+                            flag1: {type:'line', xMin:xy(-4,0).x, xMax:xy(-2,1).x, yMin:xy(-4,0).y, yMax:xy(-2,1).y, borderColor:'blue', borderWidth:2, label:{display:true,content:'Flag',color:'blue'}},
+                            flag2: {type:'line', xMin:xy(-2,1).x, xMax:xy(2,-1).x, yMin:xy(-2,1).y, yMax:xy(2,-1).y, borderColor:'blue', borderWidth:2},
+                            flag3: {type:'line', xMin:xy(2,-1).x, xMax:xy(4,0).x, yMin:xy(2,-1).y, yMax:xy(4,0).y, borderColor:'blue', borderWidth:2}
+                        };
+                    }
+                    return {};
+                });
+                // Cup & Handle
+                cacheOrCalc('cup', () => {
+                    if (data.length < 13) return {};
+                    const closes = data.slice(start-6, start+7).map(c=>c.c);
+                    // Require downtrend before pattern
+                    if (!isDowntrend(closes, 7)) return {};
+                    // Rounded bottom then small consolidation
+                    const left = xy(-6,-1).y, mid = xy(0,-1).y, right = xy(6,0).y;
+                    const avg = sma(closes, 7);
+                    if (mid < left && mid < right && Math.abs(left-right)<0.05*avg) {
+                        return {
+                            cup: {type:'line', xMin:xy(-6,-1).x, xMax:xy(0,-1).x, yMin:left, yMax:mid, borderColor:'purple', borderWidth:2, label:{display:true,content:'Cup',color:'purple'}},
+                            handle: {type:'line', xMin:xy(0,-1).x, xMax:xy(6,0).x, yMin:mid, yMax:right, borderColor:'purple', borderWidth:2, label:{display:true,content:'Handle',color:'purple'}}
+                        };
+                    }
+                    return {};
+                });
+                // Add buy/sell dot indicators for bullish/bearish patterns
+                let buySignal = null, sellSignal = null;
+                // Only show dot when pattern is freshly detected (not just cached)
+                // Use the candle index where the pattern is detected
+                if (patternToggles.db && patternOverlayCache.db && patternOverlayCache.db._refCandle === data[data.length-1]) {
+                    buySignal = { x: data[data.length-1].x, y: data[data.length-1].c };
+                }
+                if (patternToggles.cup && patternOverlayCache.cup && patternOverlayCache.cup._refCandle === data[data.length-1]) {
+                    buySignal = { x: data[data.length-1].x, y: data[data.length-1].c };
+                }
+                if (patternToggles.dt && patternOverlayCache.dt && patternOverlayCache.dt._refCandle === data[data.length-1]) {
+                    sellSignal = { x: data[data.length-1].x, y: data[data.length-1].c };
+                }
+                if (patternToggles.hs && patternOverlayCache.hs && patternOverlayCache.hs._refCandle === data[data.length-1]) {
+                    sellSignal = { x: data[data.length-1].x, y: data[data.length-1].c };
+                }
+                if (buySignal) {
+                    annotations.buyDot = {
+                        type: 'point', xValue: buySignal.x, yValue: buySignal.y,
+                        backgroundColor: 'green', radius: 7, borderColor: 'white', borderWidth: 2,
+                        label: {display:true, content:'Buy', color:'white', position:'center'}
+                    };
+                }
+                if (sellSignal) {
+                    annotations.sellDot = {
+                        type: 'point', xValue: sellSignal.x, yValue: sellSignal.y,
+                        backgroundColor: 'red', radius: 7, borderColor: 'white', borderWidth: 2,
+                        label: {display:true, content:'Sell', color:'white', position:'center'}
+                    };
+                }
+                return annotations;
+            }
+
+            function updatePatternOverlays() {
+                if (!tradingChart) return;
+                const anns = getPatternAnnotations();
+                // Remove previous pattern overlays
+                Object.keys(tradingChart.options.plugins.annotation.annotations).forEach(key => {
+                    if (["hs","hsL","hsR","hsHead","hsHeadR","dt1","dt2","db1","db2","tri1","tri2","flag1","flag2","flag3","cup","handle"].includes(key)) {
+                        delete tradingChart.options.plugins.annotation.annotations[key];
+                    }
+                });
+                Object.assign(tradingChart.options.plugins.annotation.annotations, anns);
+                tradingChart.update();
+            }
+
+            // Remove old checkbox event listener logic (now handled by buttons)
+
+            // Always update overlays when chart data changes, but only if tradingChart is initialized
+            const origRenderLoop = renderLoop;
+            renderLoop = function() {
+                origRenderLoop.apply(this, arguments);
+                if (typeof tradingChart !== 'undefined' && tradingChart) {
+                    updatePatternOverlays();
+                }
+            }
+            // Info button for trading patterns modal
+            const infoBtn = document.getElementById('info-patterns-btn');
+            const modal = document.getElementById('patterns-info-modal');
+            const closeModal = document.getElementById('close-patterns-info');
+            infoBtn.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+            });
+            closeModal.addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.add('hidden');
+            });
             // Chart panel collapse logic
             let chartPanelCollapsed = true;
             const chartToggleBtn = document.getElementById('chart-toggle-btn');
@@ -294,11 +637,13 @@
                 const timeframeRow = chartControls.children[0];
                 const timeframeLabel = timeframeRow.querySelector('label');
                 const candleBtn = timeframeRow.querySelector('#candle-toggle-btn');
+                const patternTogglesPanel = document.getElementById('pattern-toggles-panel');
                 if (chartPanelCollapsed) {
                     // Hide all except timeframe buttons
                     chartControls.querySelectorAll(':scope > div:not(:first-child)').forEach(el => el.style.display = 'none');
                     if (timeframeLabel) timeframeLabel.style.display = 'none';
                     if (candleBtn) candleBtn.style.display = 'none';
+                    if (patternTogglesPanel) patternTogglesPanel.style.display = 'none';
                     chartToggleBtn.textContent = 'Expand';
                     chartContainer.classList.remove('min-h-[300px]');
                     chartContainer.classList.add('min-h-[200px]');
@@ -306,6 +651,7 @@
                     chartControls.querySelectorAll(':scope > div').forEach(el => el.style.display = '');
                     if (timeframeLabel) timeframeLabel.style.display = '';
                     if (candleBtn) candleBtn.style.display = '';
+                    if (patternTogglesPanel) patternTogglesPanel.style.display = '';
                     chartToggleBtn.textContent = 'Collapse';
                     chartContainer.classList.remove('min-h-[200px]');
                     chartContainer.classList.add('min-h-[300px]');
@@ -328,19 +674,17 @@
                 const unrealizedPlLabel = document.getElementById('unrealized-pl-label');
                 const positionsPanel = document.getElementById('positions-panel');
                 const isDesktop = window.innerWidth > 640;
+                if (!tradeSizeRow || !accountToggleBtn) return;
                 if (accountPanelCollapsed) {
                     tradeSizeRow.style.display = 'none';
                     accountToggleBtn.textContent = 'Expand';
-                    // Hide all labels using Tailwind hidden class
                     if (balanceLabel) balanceLabel.classList.add('hidden');
                     if (lastPlLabel) lastPlLabel.classList.add('hidden');
                     if (unrealizedPlLabel) unrealizedPlLabel.classList.add('hidden');
-                    // Only hide positionsPanel on mobile
                     if (positionsPanel) positionsPanel.style.display = isDesktop ? '' : 'none';
                 } else {
                     tradeSizeRow.style.display = '';
                     accountToggleBtn.textContent = 'Collapse';
-                    // Show all labels
                     if (balanceLabel) balanceLabel.classList.remove('hidden');
                     if (lastPlLabel) lastPlLabel.classList.remove('hidden');
                     if (unrealizedPlLabel) unrealizedPlLabel.classList.remove('hidden');
