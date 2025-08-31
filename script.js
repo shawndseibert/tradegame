@@ -1,65 +1,94 @@
     document.addEventListener('DOMContentLoaded', () => {
-            // Info modal pattern section toggles
-            const infoBtnEls = {
-                hs: document.getElementById('info-hs-btn'),
-                dt: document.getElementById('info-dt-btn'),
-                db: document.getElementById('info-db-btn'),
-                triangle: document.getElementById('info-triangle-btn'),
-                flag: document.getElementById('info-flag-btn'),
-                cup: document.getElementById('info-cup-btn')
-            };
-            const infoSectionEls = {
-                hs: document.getElementById('info-hs-section'),
-                dt: document.getElementById('info-dt-section'),
-                db: document.getElementById('info-db-section'),
-                triangle: document.getElementById('info-triangle-section'),
-                cup: document.getElementById('info-cup-section')
-            };
-            const infoToggleState = {
-                hs: false,
-                dt: false,
-                db: false,
-                triangle: false,
-                flag: false,
-                cup: false
-            };
-            Object.entries(infoBtnEls).forEach(([key, btn]) => {
-                btn.addEventListener('click', () => {
-                    infoToggleState[key] = !infoToggleState[key];
-                    patternToggles[key] = infoToggleState[key]; // Sync chart overlay toggle
-                    updateInfoBtnStyles();
-                    updateInfoSections();
-                    updatePatternBtnStyles();
-                    updatePatternOverlays();
-                });
+        // --- Indicator Toggles Logic ---
+    let showBuySellDots = false;
+    let showBullishIndicators = false;
+    let showBearishIndicators = false;
+    let showTriangleIndicators = false;
+    let showFlagIndicators = false;
+        const buySellBtn = document.getElementById('toggle-buy-sell-dots');
+        const bullishBtn = document.getElementById('toggle-bullish-indicators');
+        const bearishBtn = document.getElementById('toggle-bearish-indicators');
+    const triangleBtn = document.getElementById('toggle-triangle-indicators');
+    const flagBtn = document.getElementById('toggle-flag-indicators');
+
+        function updateIndicatorBtnStyles() {
+    buySellBtn.classList.toggle('bg-indigo-600', showBuySellDots);
+    buySellBtn.classList.toggle('text-white', showBuySellDots);
+    buySellBtn.classList.toggle('bg-gray-700', !showBuySellDots);
+    buySellBtn.classList.toggle('text-gray-200', !showBuySellDots);
+    buySellBtn.setAttribute('aria-pressed', showBuySellDots);
+
+    bullishBtn.classList.toggle('bg-green-600', showBullishIndicators);
+    bullishBtn.classList.toggle('text-white', showBullishIndicators);
+    bullishBtn.classList.toggle('bg-gray-700', !showBullishIndicators);
+    bullishBtn.classList.toggle('text-gray-200', !showBullishIndicators);
+    bullishBtn.setAttribute('aria-pressed', showBullishIndicators);
+
+    bearishBtn.classList.toggle('bg-red-600', showBearishIndicators);
+    bearishBtn.classList.toggle('text-white', showBearishIndicators);
+    bearishBtn.classList.toggle('bg-gray-700', !showBearishIndicators);
+    bearishBtn.classList.toggle('text-gray-200', !showBearishIndicators);
+    bearishBtn.setAttribute('aria-pressed', showBearishIndicators);
+
+    triangleBtn.classList.toggle('bg-yellow-600', showTriangleIndicators);
+    triangleBtn.classList.toggle('text-white', showTriangleIndicators);
+    triangleBtn.classList.toggle('bg-gray-700', !showTriangleIndicators);
+    triangleBtn.classList.toggle('text-gray-200', !showTriangleIndicators);
+    triangleBtn.setAttribute('aria-pressed', showTriangleIndicators);
+
+    flagBtn.classList.toggle('bg-blue-600', showFlagIndicators);
+    flagBtn.classList.toggle('text-white', showFlagIndicators);
+    flagBtn.classList.toggle('bg-gray-700', !showFlagIndicators);
+    flagBtn.classList.toggle('text-gray-200', !showFlagIndicators);
+    flagBtn.setAttribute('aria-pressed', showFlagIndicators);
+        }
+
+        buySellBtn.addEventListener('click', () => {
+        showBuySellDots = !showBuySellDots;
+        updateIndicatorBtnStyles();
+        updatePatternOverlays();
+        uiNeedsUpdate = true;
+        });
+        bullishBtn.addEventListener('click', () => {
+            showBullishIndicators = !showBullishIndicators;
+            updateIndicatorBtnStyles();
+            updatePatternOverlays();
+            uiNeedsUpdate = true;
+        });
+        bearishBtn.addEventListener('click', () => {
+            showBearishIndicators = !showBearishIndicators;
+            updateIndicatorBtnStyles();
+            updatePatternOverlays();
+            uiNeedsUpdate = true;
+        });
+    triangleBtn.addEventListener('click', () => {
+        showTriangleIndicators = !showTriangleIndicators;
+        updateIndicatorBtnStyles();
+        updatePatternOverlays();
+        uiNeedsUpdate = true;
+    });
+    flagBtn.addEventListener('click', () => {
+        showFlagIndicators = !showFlagIndicators;
+        updateIndicatorBtnStyles();
+        updatePatternOverlays();
+        uiNeedsUpdate = true;
+    });
+        updateIndicatorBtnStyles();
+            // Info modal now only shows info sections, no toggles/buttons
+            // Show all info sections by default
+            ['info-hs-section','info-dt-section','info-db-section','info-triangle-section','info-flag-section','info-cup-section'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
             });
-            function updateInfoBtnStyles() {
-                Object.entries(infoBtnEls).forEach(([key, btn]) => {
-                    if (infoToggleState[key]) {
-                        btn.classList.add('bg-indigo-600', 'text-white');
-                        btn.classList.remove('bg-gray-700', 'text-gray-200', 'hover:bg-gray-600');
-                    } else {
-                        btn.classList.remove('bg-indigo-600', 'text-white');
-                        btn.classList.add('bg-gray-700', 'text-gray-200', 'hover:bg-gray-600');
-                    }
-                });
-            }
-            function updateInfoSections() {
-                Object.entries(infoSectionEls).forEach(([key, section]) => {
-                    section.classList.toggle('hidden', !infoToggleState[key]);
-                });
-            }
-            updateInfoBtnStyles();
-            updateInfoSections();
             // --- Pattern Overlay Logic ---
             // Pattern toggle state, now only controlled by info modal
             const patternToggles = {
-                hs: false,
-                dt: false,
-                db: false,
-                triangle: false,
-                flag: false,
-                cup: false
+    hs: false,
+    dt: false,
+    db: false,
+    triangle: false,
+    flag: false,
+    cup: false
             };
             function updatePatternBtnStyles() { /* No-op, buttons removed */ }
 
@@ -68,8 +97,28 @@
             let patternOverlayCache = {};
             let patternOverlayAge = {};
             function getPatternAnnotations() {
+                let buySignal = null, sellSignal = null;
+                // ...existing code...
+                // (move removal logic to after overlays/dots are added)
+                // ...existing code for overlays and dots...
+                // ...existing code for overlays and dots...
                 // Example shapes, placed using the newest candles
                 const annotations = {};
+                // ...existing code for overlays and dots population...
+                // Set opacity for overlays/dots if toggled off (after annotations is populated)
+                if (annotations.hs) annotations.hs.borderOpacity = showBearishIndicators ? 1 : 0.2;
+                if (annotations.hsL) annotations.hsL.borderOpacity = showBearishIndicators ? 1 : 0.2;
+                if (annotations.hsR) annotations.hsR.borderOpacity = showBearishIndicators ? 1 : 0.2;
+                if (annotations.hsHead) annotations.hsHead.borderOpacity = showBearishIndicators ? 1 : 0.2;
+                if (annotations.hsHeadR) annotations.hsHeadR.borderOpacity = showBearishIndicators ? 1 : 0.2;
+                if (annotations.dt1) annotations.dt1.borderOpacity = showBearishIndicators ? 1 : 0.2;
+                if (annotations.dt2) annotations.dt2.borderOpacity = showBearishIndicators ? 1 : 0.2;
+                if (annotations.db1) annotations.db1.borderOpacity = showBullishIndicators ? 1 : 0.2;
+                if (annotations.db2) annotations.db2.borderOpacity = showBullishIndicators ? 1 : 0.2;
+                if (annotations.cup) annotations.cup.borderOpacity = showBullishIndicators ? 1 : 0.2;
+                if (annotations.handle) annotations.handle.borderOpacity = showBullishIndicators ? 1 : 0.2;
+                if (annotations.buyDot) annotations.buyDot.backgroundOpacity = showBuySellDots ? 1 : 0.2;
+                if (annotations.sellDot) annotations.sellDot.backgroundOpacity = showBuySellDots ? 1 : 0.2;
                 const data = tradingChart?.data?.datasets[0]?.data || [];
                 // Dynamically scale candle requirements by timeframe
                 const tf = window.currentTimeframe || 1;
@@ -140,8 +189,208 @@
                         }
                     }
                 }
-                // Head & Shoulders
+                // Set patternToggles for overlays based on toggles
+    patternToggles.hs = showBearishIndicators;
+    patternToggles.dt = showBearishIndicators;
+    patternToggles.db = showBullishIndicators;
+    patternToggles.cup = showBullishIndicators;
+    patternToggles.triangle = showTriangleIndicators;
+    patternToggles.flag = showFlagIndicators;
+
+                // --- Always run pattern detection for dots, even if overlays are off ---
+                // Save overlay toggles
+                const overlayToggles = { ...patternToggles };
+                // Temporarily enable all for dot detection
+                patternToggles.hs = true;
+                patternToggles.dt = true;
+                patternToggles.db = true;
+                patternToggles.cup = true;
+                // Run pattern detection to update caches (but don't add overlays yet)
                 cacheOrCalc('hs', () => {
+                    if (data.length < 13) return {};
+                    const closes = data.slice(start-4, start+9).map(c=>c.c);
+                    if (!isUptrend(closes, 7)) return {};
+                    const l = xy(-6,0).y, ls = xy(-4,1).y, h = xy(0,-1).y, rs = xy(4,1).y, r = xy(6,0).y;
+                    const avg = sma(closes, 5);
+                    if (ls < h && rs < h && h > l && h > r && Math.abs(ls-rs)<0.03*avg) {
+                        return {
+                            hs: {type:'line', xMin:xy(-6,0).x, xMax:xy(6,0).x, yMin:l, yMax:r, borderColor:'orange', borderWidth:4, label:{display:false,content:'H&S',position:'start',color:'orange'}},
+                            hsL: {type:'line', xMin:xy(-6,0).x, xMax:xy(-4,1).x, yMin:l, yMax:ls, borderColor:'orange', borderWidth:4},
+                            hsR: {type:'line', xMin:xy(4,1).x, xMax:xy(6,0).x, yMin:rs, yMax:r, borderColor:'orange', borderWidth:4},
+                            hsHead: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,-1).x, yMin:ls, yMax:h, borderColor:'orange', borderWidth:4},
+                            hsHeadR: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,1).x, yMin:h, yMax:rs, borderColor:'orange', borderWidth:4}
+                        };
+                    }
+                    return {};
+                });
+                cacheOrCalc('dt', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-2, start+7).map(c=>c.c);
+                    if (!isUptrend(closes, 5)) return {};
+                    const p1 = xy(-4,1).y, dip = xy(0,0).y, p2 = xy(4,1).y;
+                    const avg = sma(closes, 5);
+                    if (Math.abs(p1-p2)<0.01*avg && dip < p1 && dip < p2) {
+                        return {
+                            dt1: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,1).x, yMin:p1, yMax:p1, borderColor:'red', borderWidth:4, label:{display:false,content:'DT',color:'red'}},
+                            dt2: {type:'line', xMin:xy(0,1).x, xMax:xy(4,1).x, yMin:p2, yMax:p2, borderColor:'red', borderWidth:4}
+                        };
+                    }
+                    return {};
+                });
+                cacheOrCalc('db', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-2, start+7).map(c=>c.c);
+                    if (!isDowntrend(closes, 5)) return {};
+                    const t1 = xy(-4,-1).y, peak = xy(0,0).y, t2 = xy(4,-1).y;
+                    const avg = sma(closes, 5);
+                    if (Math.abs(t1-t2)<0.01*avg && peak > t1 && peak > t2) {
+                        return {
+                            db1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(0,-1).x, yMin:t1, yMax:t1, borderColor:'green', borderWidth:4, label:{display:false,content:'DB',color:'green'}},
+                            db2: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,-1).x, yMin:t2, yMax:t2, borderColor:'green', borderWidth:4}
+                        };
+                    }
+                    return {};
+                });
+                cacheOrCalc('cup', () => {
+                    if (data.length < 13) return {};
+                    const closes = data.slice(start-6, start+7).map(c=>c.c);
+                    if (!isDowntrend(closes, 7)) return {};
+                    const left = xy(-6,-1).y, mid = xy(0,-1).y, right = xy(6,0).y;
+                    const avg = sma(closes, 7);
+                    if (mid < left && mid < right && Math.abs(left-right)<0.05*avg) {
+                        return {
+                            cup: {type:'line', xMin:xy(-6,-1).x, xMax:xy(0,-1).x, yMin:left, yMax:mid, borderColor:'purple', borderWidth:4, label:{display:false,content:'Cup',color:'purple'}},
+                            handle: {type:'line', xMin:xy(0,-1).x, xMax:xy(6,0).x, yMin:mid, yMax:right, borderColor:'purple', borderWidth:4, label:{display:false,content:'Handle',color:'purple'}}
+                        };
+                    }
+                    return {};
+                });
+                // Restore overlay toggles
+                Object.assign(patternToggles, overlayToggles);
+
+                // Always run pattern detection and add overlays
+                cacheOrCalc('hs', () => {
+                    if (data.length < 13) return {};
+                    const closes = data.slice(start-4, start+9).map(c=>c.c);
+                    if (!isUptrend(closes, 7)) return {};
+                    const l = xy(-6,0).y, ls = xy(-4,1).y, h = xy(0,-1).y, rs = xy(4,1).y, r = xy(6,0).y;
+                    const avg = sma(closes, 5);
+                    if (ls < h && rs < h && h > l && h > r && Math.abs(ls-rs)<0.03*avg) {
+                        return {
+                            hs: {type:'line', xMin:xy(-6,0).x, xMax:xy(6,0).x, yMin:l, yMax:r, borderColor:'orange', borderWidth:4, label:{display:false,content:'H&S',position:'start',color:'orange'}},
+                            hsL: {type:'line', xMin:xy(-6,0).x, xMax:xy(-4,1).x, yMin:l, yMax:ls, borderColor:'orange', borderWidth:4},
+                            hsR: {type:'line', xMin:xy(4,1).x, xMax:xy(6,0).x, yMin:rs, yMax:r, borderColor:'orange', borderWidth:4},
+                            hsHead: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,-1).x, yMin:ls, yMax:h, borderColor:'orange', borderWidth:4},
+                            hsHeadR: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,1).x, yMin:h, yMax:rs, borderColor:'orange', borderWidth:4}
+                        };
+                    }
+                    return {};
+                });
+                cacheOrCalc('dt', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-2, start+7).map(c=>c.c);
+                    if (!isUptrend(closes, 5)) return {};
+                    const p1 = xy(-4,1).y, dip = xy(0,0).y, p2 = xy(4,1).y;
+                    const avg = sma(closes, 5);
+                    if (Math.abs(p1-p2)<0.01*avg && dip < p1 && dip < p2) {
+                        return {
+                            dt1: {type:'line', xMin:xy(-4,1).x, xMax:xy(0,1).x, yMin:p1, yMax:p1, borderColor:'red', borderWidth:4, label:{display:false,content:'DT',color:'red'}},
+                            dt2: {type:'line', xMin:xy(0,1).x, xMax:xy(4,1).x, yMin:p2, yMax:p2, borderColor:'red', borderWidth:4}
+                        };
+                    }
+                    return {};
+                });
+                cacheOrCalc('db', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-2, start+7).map(c=>c.c);
+                    if (!isDowntrend(closes, 5)) return {};
+                    const t1 = xy(-4,-1).y, peak = xy(0,0).y, t2 = xy(4,-1).y;
+                    const avg = sma(closes, 5);
+                    if (Math.abs(t1-t2)<0.01*avg && peak > t1 && peak > t2) {
+                        return {
+                            db1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(0,-1).x, yMin:t1, yMax:t1, borderColor:'green', borderWidth:4, label:{display:false,content:'DB',color:'green'}},
+                            db2: {type:'line', xMin:xy(0,-1).x, xMax:xy(4,-1).x, yMin:t2, yMax:t2, borderColor:'green', borderWidth:4}
+                        };
+                    }
+                    return {};
+                });
+                cacheOrCalc('triangle', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-2, start+7).map(c=>c.c);
+                    const max = Math.max(...closes), min = Math.min(...closes);
+                    if ((max-min)/min < 0.05) return {};
+                    const low1 = xy(-4,-1).y, low2 = xy(4,-1).y, high1 = xy(-4,1).y, high2 = xy(4,1).y;
+                    if (high1 > high2 && low1 < low2) {
+                        return {
+                            tri1: {type:'line', xMin:xy(-4,-1).x, xMax:xy(4,1).x, yMin:low1, yMax:high2, borderColor:'yellow', borderWidth:4, label:{display:false,content:'Triangle',color:'yellow'}},
+                            tri2: {type:'line', xMin:xy(-4,1).x, xMax:xy(4,-1).x, yMin:high1, yMax:low2, borderColor:'yellow', borderWidth:4}
+                        };
+                    }
+                    return {};
+                });
+                cacheOrCalc('flag', () => {
+                    if (data.length < 9) return {};
+                    const closes = data.slice(start-4, start+5).map(c=>c.c);
+                    const move = Math.abs(closes[0] - closes[4]);
+                    const cons = Math.max(...closes.slice(4)) - Math.min(...closes.slice(4));
+                    if (move > 2 * cons) {
+                        return {
+                            flag1: {type:'line', xMin:xy(-4,0).x, xMax:xy(-2,1).x, yMin:xy(-4,0).y, yMax:xy(-2,1).y, borderColor:'blue', borderWidth:4, label:{display:false,content:'Flag',color:'blue'}},
+                            flag2: {type:'line', xMin:xy(-2,1).x, xMax:xy(2,-1).x, yMin:xy(-2,1).y, yMax:xy(2,-1).y, borderColor:'blue', borderWidth:4},
+                            flag3: {type:'line', xMin:xy(2,-1).x, xMax:xy(4,0).x, yMin:xy(2,-1).y, yMax:xy(4,0).y, borderColor:'blue', borderWidth:4}
+                        };
+                    }
+                    return {};
+                });
+                cacheOrCalc('cup', () => {
+                    if (data.length < 13) return {};
+                    const closes = data.slice(start-6, start+7).map(c=>c.c);
+                    if (!isDowntrend(closes, 7)) return {};
+                    const left = xy(-6,-1).y, mid = xy(0,-1).y, right = xy(6,0).y;
+                    const avg = sma(closes, 7);
+                    if (mid < left && mid < right && Math.abs(left-right)<0.05*avg) {
+                        return {
+                            cup: {type:'line', xMin:xy(-6,-1).x, xMax:xy(0,-1).x, yMin:left, yMax:mid, borderColor:'purple', borderWidth:4, label:{display:false,content:'Cup',color:'purple'}},
+                            handle: {type:'line', xMin:xy(0,-1).x, xMax:xy(6,0).x, yMin:mid, yMax:right, borderColor:'purple', borderWidth:4, label:{display:false,content:'Handle',color:'purple'}}
+                        };
+                    }
+                    return {};
+                });
+
+                // Always run pattern detection for dots, even if overlays are off
+        // Only add dots if their pattern is present and dot toggle is enabled
+        if (showBuySellDots) {
+            if (patternOverlayCache.db && patternOverlayCache.db._refCandle === data[data.length-1]) {
+                annotations.buyDot = {
+                    type: 'point', xValue: data[data.length-1].x, yValue: data[data.length-1].c,
+                    backgroundColor: 'green', radius: 7, borderColor: 'white', borderWidth: 2,
+                    label: {display:true, content:'Buy', color:'white', position:'center'}
+                };
+            }
+            if (patternOverlayCache.cup && patternOverlayCache.cup._refCandle === data[data.length-1]) {
+                annotations.buyDot = {
+                    type: 'point', xValue: data[data.length-1].x, yValue: data[data.length-1].c,
+                    backgroundColor: 'green', radius: 7, borderColor: 'white', borderWidth: 2,
+                    label: {display:true, content:'Buy', color:'white', position:'center'}
+                };
+            }
+            if (patternOverlayCache.dt && patternOverlayCache.dt._refCandle === data[data.length-1]) {
+                annotations.sellDot = {
+                    type: 'point', xValue: data[data.length-1].x, yValue: data[data.length-1].c,
+                    backgroundColor: 'red', radius: 7, borderColor: 'white', borderWidth: 2,
+                    label: {display:true, content:'Sell', color:'white', position:'center'}
+                };
+            }
+            if (patternOverlayCache.hs && patternOverlayCache.hs._refCandle === data[data.length-1]) {
+                annotations.sellDot = {
+                    type: 'point', xValue: data[data.length-1].x, yValue: data[data.length-1].c,
+                    backgroundColor: 'red', radius: 7, borderColor: 'white', borderWidth: 2,
+                    label: {display:true, content:'Sell', color:'white', position:'center'}
+                };
+            }
+        }
+                // Head & Shoulders (bearish)
+                if (showBearishIndicators) cacheOrCalc('hs', () => {
                     // Use 13 candles for context
                     if (data.length < 13) return {};
                     const closes = data.slice(start-4, start+9).map(c=>c.c);
@@ -162,8 +411,8 @@
                     }
                     return {};
                 });
-                // Double Top
-                cacheOrCalc('dt', () => {
+                // Double Top (bearish)
+                if (showBearishIndicators) cacheOrCalc('dt', () => {
                     if (data.length < 9) return {};
                     const closes = data.slice(start-2, start+7).map(c=>c.c);
                     // Require uptrend before pattern
@@ -179,8 +428,8 @@
                     }
                     return {};
                 });
-                // Double Bottom
-                cacheOrCalc('db', () => {
+                // Double Bottom (bullish)
+                if (showBullishIndicators) cacheOrCalc('db', () => {
                     if (data.length < 9) return {};
                     const closes = data.slice(start-2, start+7).map(c=>c.c);
                     // Require downtrend before pattern
@@ -196,7 +445,7 @@
                     }
                     return {};
                 });
-                // Triangle
+                // Triangle (neutral)
                 cacheOrCalc('triangle', () => {
                     if (data.length < 9) return {};
                     const closes = data.slice(start-2, start+7).map(c=>c.c);
@@ -213,7 +462,7 @@
                     }
                     return {};
                 });
-                // Flag/Pennant
+                // Flag/Pennant (neutral)
                 cacheOrCalc('flag', () => {
                     if (data.length < 9) return {};
                     const closes = data.slice(start-4, start+5).map(c=>c.c);
@@ -229,8 +478,8 @@
                     }
                     return {};
                 });
-                // Cup & Handle
-                cacheOrCalc('cup', () => {
+                // Cup & Handle (bullish)
+                if (showBullishIndicators) cacheOrCalc('cup', () => {
                     if (data.length < 13) return {};
                     const closes = data.slice(start-6, start+7).map(c=>c.c);
                     // Require downtrend before pattern
@@ -246,35 +495,36 @@
                     }
                     return {};
                 });
-                // Add buy/sell dot indicators for bullish/bearish patterns
-                let buySignal = null, sellSignal = null;
-                // Only show dot when pattern is freshly detected (not just cached)
-                // Use the candle index where the pattern is detected
-                if (patternToggles.db && patternOverlayCache.db && patternOverlayCache.db._refCandle === data[data.length-1]) {
+
+                // Set buy/sell signals BEFORE using them
+                if (patternOverlayCache.db && patternOverlayCache.db._refCandle === data[data.length-1]) {
                     buySignal = { x: data[data.length-1].x, y: data[data.length-1].c };
                 }
-                if (patternToggles.cup && patternOverlayCache.cup && patternOverlayCache.cup._refCandle === data[data.length-1]) {
+                if (patternOverlayCache.cup && patternOverlayCache.cup._refCandle === data[data.length-1]) {
                     buySignal = { x: data[data.length-1].x, y: data[data.length-1].c };
                 }
-                if (patternToggles.dt && patternOverlayCache.dt && patternOverlayCache.dt._refCandle === data[data.length-1]) {
+                if (patternOverlayCache.dt && patternOverlayCache.dt._refCandle === data[data.length-1]) {
                     sellSignal = { x: data[data.length-1].x, y: data[data.length-1].c };
                 }
-                if (patternToggles.hs && patternOverlayCache.hs && patternOverlayCache.hs._refCandle === data[data.length-1]) {
+                if (patternOverlayCache.hs && patternOverlayCache.hs._refCandle === data[data.length-1]) {
                     sellSignal = { x: data[data.length-1].x, y: data[data.length-1].c };
                 }
-                if (buySignal) {
-                    annotations.buyDot = {
-                        type: 'point', xValue: buySignal.x, yValue: buySignal.y,
-                        backgroundColor: 'green', radius: 7, borderColor: 'white', borderWidth: 2,
-                        label: {display:true, content:'Buy', color:'white', position:'center'}
-                    };
-                }
-                if (sellSignal) {
-                    annotations.sellDot = {
-                        type: 'point', xValue: sellSignal.x, yValue: sellSignal.y,
-                        backgroundColor: 'red', radius: 7, borderColor: 'white', borderWidth: 2,
-                        label: {display:true, content:'Sell', color:'white', position:'center'}
-                    };
+                // Show dots if toggled on
+                if (showBuySellDots) {
+                    if (buySignal) {
+                        annotations.buyDot = {
+                            type: 'point', xValue: buySignal.x, yValue: buySignal.y,
+                            backgroundColor: 'green', radius: 7, borderColor: 'white', borderWidth: 2,
+                            label: {display:true, content:'Buy', color:'white', position:'center'}
+                        };
+                    }
+                    if (sellSignal) {
+                        annotations.sellDot = {
+                            type: 'point', xValue: sellSignal.x, yValue: sellSignal.y,
+                            backgroundColor: 'red', radius: 7, borderColor: 'white', borderWidth: 2,
+                            label: {display:true, content:'Sell', color:'white', position:'center'}
+                        };
+                    }
                 }
                 return annotations;
             }
@@ -649,9 +899,29 @@
             });
             devCloseBtn.addEventListener('click', closeDevMenu);
             devNewGameBtn.addEventListener('click', () => {
-                // Reset game state and localStorage
-                localStorage.removeItem('tradegame_state');
-                location.reload();
+    // Reset game state and localStorage
+    localStorage.removeItem('tradegame_state');
+        // Reset in-memory state
+        account = { balance: 10000, equity: 10000 };
+        openPositions = [];
+        tradeHistory = [];
+        // Preload price data with 5000 candles
+        function preloadPriceData() {
+            masterOneMinuteData = [];
+            lastPrice = 50000;
+            const historyMinutes = 5000;
+            lastTime = new Date().getTime() - (historyMinutes * 60000);
+            for (let i = 0; i < historyMinutes; i++) masterOneMinuteData.push(generateOneMinuteCandle());
+        }
+        preloadPriceData();
+    // Update UI
+    if (typeof updateAccountUI === 'function') updateAccountUI();
+    if (typeof updatePositionsUI === 'function') updatePositionsUI();
+    if (typeof updateHistoryUI === 'function') updateHistoryUI();
+    if (typeof updatePatternOverlays === 'function') updatePatternOverlays();
+    if (typeof tradingChart !== 'undefined' && tradingChart) tradingChart.update();
+    // Optionally reload page for full reset
+    // location.reload();
             });
             // Mobile: hold top right to open dev menu
             devTouchArea.addEventListener('touchstart', () => {
