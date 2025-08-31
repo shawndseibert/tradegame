@@ -1,3 +1,25 @@
+// Helper to abbreviate large numbers (e.g. 1,200,000 -> 1.2M)
+function abbreviateNumber(num, digits = 2) {
+    if (typeof num !== 'number') num = parseFloat(num);
+    if (isNaN(num)) return '$0.00';
+    const absNum = Math.abs(num);
+    const units = [
+        { value: 1e24, symbol: 'S' }, // Septillion
+        { value: 1e21, symbol: 'Qn' }, // Quintillion
+        { value: 1e18, symbol: 'Qi' }, // Quintillion
+        { value: 1e15, symbol: 'Qa' }, // Quadrillion
+        { value: 1e12, symbol: 'T' }, // Trillion
+        { value: 1e9, symbol: 'B' }, // Billion
+        { value: 1e6, symbol: 'M' }, // Million
+        { value: 1e3, symbol: 'K' } // Thousand
+    ];
+    for (const unit of units) {
+        if (absNum >= unit.value) {
+            return '$' + (num / unit.value).toFixed(digits) + unit.symbol;
+        }
+    }
+    return '$' + num.toFixed(2);
+}
     document.addEventListener('DOMContentLoaded', () => {
         // --- Indicator Toggles Logic ---
     let showBuySellDots = false;
@@ -687,16 +709,69 @@
                 }
             }
             function saveGameState() {
+                // Persist player's dashed position line (entry price) for each open position
+                const positionLines = openPositions.map(pos => ({ id: pos.id, entryPrice: pos.entryPrice, type: pos.type, leverage: pos.leverage }));
                 localStorage.setItem('tradegame_state', JSON.stringify({
                     account,
                     openPositions,
                     tradeHistory,
                     masterOneMinuteData,
                     lastPrice,
-                    lastTime
+                    lastTime,
+                    positionLines
                 }));
             }
             let account, openPositions, tradeHistory, masterOneMinuteData, lastPrice, lastTime;
+            // After restoring openPositions, re-add dashed position line annotation for each
+            function restorePositionAnnotations() {
+                if (!tradingChart || !tradingChart.options || !tradingChart.options.plugins || !tradingChart.options.plugins.annotation) return;
+                openPositions.forEach(position => {
+                    const type = position.type;
+                    const annotation = {
+                        type: 'line',
+                        yMin: position.entryPrice,
+                        yMax: position.entryPrice,
+                        borderColor: type === 'long' ? '#26A69A' : '#EF5350',
+                        borderWidth: 2,
+                        borderDash: [6, 6],
+                        label: {
+                            content: `${type.toUpperCase()} @ ${position.entryPrice.toFixed(2)}`,
+                            enabled: true,
+                            position: 'end',
+                            backgroundColor: 'rgba(0,0,0,0.6)'
+                        }
+                    };
+                    tradingChart.options.plugins.annotation.annotations[position.id] = annotation;
+                    // Calculate liquidation price
+                    let liquidationPrice;
+                    if (type === 'long') {
+                        liquidationPrice = position.entryPrice - (position.entryPrice / position.leverage);
+                    } else {
+                        liquidationPrice = position.entryPrice + (position.entryPrice / position.leverage);
+                    }
+                    tradingChart.options.plugins.annotation.annotations[position.id + '_liq'] = {
+                        type: 'line',
+                        yMin: liquidationPrice,
+                        yMax: liquidationPrice,
+                        borderColor: '#FFC107',
+                        borderWidth: 1,
+                        borderDash: [4, 4],
+                        borderOpacity: 0.85,
+                        label: {
+                            content: `LIQUIDATION @ ${liquidationPrice.toFixed(2)}`,
+                            enabled: true,
+                            position: 'end',
+                            color: '#FFC107',
+                            backgroundColor: 'rgba(0,0,0,0.6)'
+                        },
+                        z: 9999
+                    };
+                });
+            }
+            // Call restore after chart is initialized
+            window.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => restorePositionAnnotations(), 500);
+            });
             let gameLoopInterval;
             const MAX_DATA_POINTS = 10000;
             const persisted = loadGameState();
@@ -707,6 +782,18 @@
                 masterOneMinuteData = persisted.masterOneMinuteData;
                 lastPrice = persisted.lastPrice;
                 lastTime = persisted.lastTime;
+                // Restore dashed position lines (entry price) for each open position
+                if (persisted.positionLines && Array.isArray(persisted.positionLines)) {
+                    persisted.positionLines.forEach(line => {
+                        // Find matching position
+                        const pos = openPositions.find(p => p.id === line.id);
+                        if (pos) {
+                            pos.entryPrice = line.entryPrice;
+                            pos.type = line.type;
+                            pos.leverage = line.leverage;
+                        }
+                    });
+                }
             } else {
                 account = { balance: 10000, equity: 10000 };
                 openPositions = [];
@@ -880,10 +967,21 @@
             // End Game Modal logic
             // ...existing code...
             // Developer Menu logic
-            const devMenu = document.getElementById('dev-menu');
-            const devNewGameBtn = document.getElementById('dev-newgame-btn');
-            const devCloseBtn = document.getElementById('dev-close-btn');
-            const devTouchArea = document.getElementById('dev-touch-area');
+    const devMenu = document.getElementById('dev-menu');
+    const devNewGameBtn = document.getElementById('dev-newgame-btn');
+    const devCloseBtn = document.getElementById('dev-close-btn');
+    const devGiveBtn = document.getElementById('dev-give-btn');
+    const devGiveAmountInput = document.getElementById('dev-give-amount');
+    const devTouchArea = document.getElementById('dev-touch-area');
+        devGiveBtn.addEventListener('click', () => {
+            const amt = parseFloat(devGiveAmountInput.value);
+            if (!isNaN(amt) && amt !== 0) {
+                account.balance += amt;
+                account.equity += amt;
+                if (typeof updateAccountUI === 'function') updateAccountUI();
+                devGiveAmountInput.value = '';
+            }
+        });
             let touchTimer = null;
             function openDevMenu() {
                 devMenu.classList.remove('hidden');
@@ -1079,24 +1177,20 @@ function updateTradeSizeFromPercent() {
                     tradingChart.update('none');
 
                     // Abbreviate balance if account panel is collapsed
-                    if (accountPanelCollapsed) {
-                        balanceEl.textContent = abbreviateBalance(account.balance);
-                    } else {
-                        balanceEl.textContent = `$${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                    }
+                    balanceEl.textContent = abbreviateNumber(account.balance);
                     // Always update margin if percent button is active
                     updateTradeSizeFromPercent();
 
                     // Update live P/L (unrealized)
                     const unrealizedPlEl = document.getElementById('unrealized-pl');
                     const totalPnl = account.equity - account.balance;
-                    unrealizedPlEl.textContent = `$${totalPnl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    unrealizedPlEl.textContent = abbreviateNumber(totalPnl);
                     unrealizedPlEl.style.color = totalPnl >= 0 ? '#4ade80' : '#f87171';
 
                     // Update last P/L (last closed position)
                     const lastPlEl = document.getElementById('last-pl');
                     const lastClosedPl = window.lastClosedPl ?? 0;
-                    lastPlEl.textContent = `$${lastClosedPl.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    lastPlEl.textContent = abbreviateNumber(lastClosedPl);
                     lastPlEl.style.color = lastClosedPl >= 0 ? '#4ade80' : '#f87171';
 
                     updatePositionsList();
