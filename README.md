@@ -1,1 +1,1 @@
-[GutHub Page](https://shawndseibert.github.io/tradegame/)
+[Trade Game](https://shawndseibert.github.io/tradegame/)
